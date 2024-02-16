@@ -44,6 +44,7 @@ impl ShellSession {
                     Your system commands MUST NOT contain any bash syntax, or pipe operators.
                     The system command output are displayed to the user directly, so don't simply repeat the output twice in your response.
                     Don't do anything else that the user doesn't ask for, or not relevant to the tasks.
+                    Your responses should be as clear and concise as possible.
 
                     {}
                 ", platform_info.dump_as_prompt()))
