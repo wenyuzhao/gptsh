@@ -1,6 +1,6 @@
 pub fn is_built_in_command(command: &str) -> bool {
-    let words = shellwords::split(command).unwrap();
-    match words[0].as_str() {
+    let words = command.split_whitespace().collect::<Vec<&str>>();
+    match words[0] {
         "exit" => true,
         "cd" => words.len() == 2,
         _ => false,
