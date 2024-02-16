@@ -1,9 +1,5 @@
 use serde::Deserialize;
 
-use once_cell::sync::Lazy;
-
-pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::load().unwrap());
-
 #[derive(Deserialize)]
 pub struct Config {
     #[serde(rename = "openai-api-key")]
