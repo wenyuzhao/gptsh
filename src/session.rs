@@ -32,7 +32,7 @@ impl ShellSession {
         let platform_info = PlatformInfo::load()?;
         Ok(Self {
             client: Client::with_config(
-                OpenAIConfig::default().with_api_key(&config.openai_api_key),
+                OpenAIConfig::default().with_api_key(&config.openai_api_key.clone().unwrap()),
             ),
             config,
             history: vec![
@@ -251,6 +251,10 @@ impl ShellSession {
     }
 
     pub async fn run_repl(&mut self) -> anyhow::Result<()> {
+        println!(
+            "🦄 Welcome to {}. The AI-powered noob-friendly interactive shell.",
+            "gptsh".blue().bold()
+        );
         loop {
             let prompt = utils::read_user_prompt()?;
             if prompt.trim().is_empty() {
