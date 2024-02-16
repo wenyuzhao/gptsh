@@ -3,7 +3,7 @@
 # Three ways to run this script:
 # 1. `gptsh ./examples/simple.gsh` - if `gptsh` is in your `PATH`
 # 2. `./examples/simple.gsh` - if `gptsh` is in your `PATH`
-# 3. cargo run -- ./examples/s
+# 3. cargo run -- ./examples/simple.gsh
 
 # Lines starting with '#' will be considered as comments and ignored.
 # Other lines will be grouped into paragraphs (i.e. text without empty lines).
