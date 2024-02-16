@@ -19,7 +19,6 @@ use crate::{builtins, utils};
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
-    #[allow(unused)]
     config: Config,
     history: Vec<ChatCompletionRequestMessage>,
     pub yes: bool,
@@ -80,7 +79,7 @@ impl ShellSession {
         messages: Vec<ChatCompletionRequestMessage>,
     ) -> anyhow::Result<ChatCompletionResponseMessage> {
         let request = CreateChatCompletionRequestArgs::default()
-            .model("gpt-3.5-turbo")
+            .model(&self.config.model)
             .messages(messages)
             .tools(vec![ChatCompletionToolArgs::default()
                 .r#type(ChatCompletionToolType::Function)

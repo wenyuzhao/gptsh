@@ -16,6 +16,12 @@ openai-api-key = "Your OpenAI API Key Here"
 pub struct Config {
     #[serde(rename = "openai-api-key")]
     pub openai_api_key: Option<String>,
+    #[serde(default = "default_model")]
+    pub model: String,
+}
+
+fn default_model() -> String {
+    "gpt-3.5-turbo".to_string()
 }
 
 impl Config {
