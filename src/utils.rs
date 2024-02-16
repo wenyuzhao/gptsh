@@ -59,7 +59,7 @@ pub fn read_user_prompt() -> anyhow::Result<String> {
 }
 
 pub fn wait_for_user_acknowledgement() -> bool {
-    let s = format!("[{}] Confirm • [{}] Abort", "ENTER↵".green(), "^x".red())
+    let s = format!("[{}] Confirm • [{}] Abort", "ENTER↵".green(), "^c".red())
         .white()
         .on_bright_black();
     print!("{}", &s);
@@ -72,7 +72,7 @@ pub fn wait_for_user_acknowledgement() -> bool {
     {
         if code == KeyCode::Enter {
             break;
-        } else if code == KeyCode::Char('x') && modifiers == event::KeyModifiers::CONTROL {
+        } else if code == KeyCode::Char('c') && modifiers == event::KeyModifiers::CONTROL {
             abort = true;
             break;
         }

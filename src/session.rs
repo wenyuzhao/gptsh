@@ -35,10 +35,10 @@ impl ShellSession {
             history: vec![
                 ChatCompletionRequestSystemMessageArgs::default()
                 .content(format!("
-                    You should act as a AI terminal shell.
-                    The user will send you prompts or descriptions of the tasks, instead of typing the system commands directly.
-                    You should take the prompts and descriptions, and then generate the system commands to execute the tasks.
-                    The system commands should not contain any bash syntax, and can executed by python's `os.system(...)` call.
+                    You are now acting as a AI-powered terminal shell, operating on the user's real computer.
+                    The user will send you prompts or descriptions of the tasks.
+                    You should take the prompts, and then generate the system commands, execute them to fullfill the tasks.
+                    Your system commands MUST NOT contain any bash syntax, or pipe operators.
                     The system command output are displayed to the user directly, so don't simply repeat the output twice in your response.
                     Don't do anything else that the user doesn't ask for, or not relevant to the tasks.
 
@@ -102,8 +102,10 @@ impl ShellSession {
     }
 
     fn execute_bash_command(&self, command: &str) -> BashCmdResult {
+        let command = command.trim();
         // Show command and get user confirmation before executing
         println!("{} {}", "➜".green().bold(), command.bold());
+
         if builtins::is_built_in_command(command) {
             let json = match builtins::execute_built_in_command(command) {
                 Ok(_) => json!({
@@ -123,8 +125,10 @@ impl ShellSession {
             return BashCmdResult::Aborted;
         }
         // Execute command
-        let mut child = run_shell::cmd!(command)
-            .command
+        // let words = shellwords::split(command).unwrap();
+        let mut child = std::process::Command::new("bash")
+            .arg("-c")
+            .arg(&command)
             .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
