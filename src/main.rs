@@ -1,5 +1,6 @@
 use clap::Parser;
 
+mod builtins;
 mod config;
 mod session;
 mod utils;

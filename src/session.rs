@@ -14,7 +14,7 @@ use colored::Colorize;
 use serde_json::json;
 
 use crate::config::{Config, PlatformInfo};
-use crate::utils;
+use crate::{builtins, utils};
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
@@ -101,6 +101,21 @@ impl ShellSession {
     fn execute_bash_command(&self, command: &str) -> BashCmdResult {
         // Show command and get user confirmation before executing
         println!("{} {}", "➜".green(), command);
+        if builtins::is_built_in_command(command) {
+            let json = match builtins::execute_built_in_command(command) {
+                Ok(_) => json!({
+                    "status_code": 0,
+                    "stdout": "",
+                    "stderr": "",
+                }),
+                Err(e) => json!({
+                    "status_code": 1,
+                    "stdout": "",
+                    "stderr": e.to_string(),
+                }),
+            };
+            return BashCmdResult::Finished(json.to_string());
+        }
         if !utils::wait_for_user_acknowledgement() {
             return BashCmdResult::Aborted;
         }
