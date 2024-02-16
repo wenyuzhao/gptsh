@@ -11,6 +11,12 @@ mod utils;
 struct Args {
     /// Path to a gptsh script file.
     script_file: Option<String>,
+    /// Skip confirmation prompts before running bash commands.
+    #[arg(short, long, default_value = "false")]
+    yes: bool,
+    /// Suppress all intermediate command output.
+    #[arg(short, long, default_value = "false")]
+    quiet: bool,
     /// The prompt or command to run.
     #[arg(last = true, allow_hyphen_values = true)]
     prompt: Vec<String>,
@@ -21,9 +27,11 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     // Create session
     let mut session = session::ShellSession::new()?;
+    session.yes = args.yes;
+    session.quiet = args.quiet;
     // Run the session
-    if let Some(ref _script) = args.script_file {
-        unimplemented!("Script file support is not yet implemented");
+    if let Some(ref script_file) = args.script_file {
+        session.run_script(script_file).await?;
     } else if args.prompt.len() > 0 {
         let prompt = args.prompt.join(" ");
         session.run_single_prompt(&prompt).await?;

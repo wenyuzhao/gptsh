@@ -19,8 +19,11 @@ use crate::{builtins, utils};
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
+    #[allow(unused)]
     config: Config,
     history: Vec<ChatCompletionRequestMessage>,
+    pub yes: bool,
+    pub quiet: bool,
 }
 
 impl ShellSession {
@@ -47,6 +50,8 @@ impl ShellSession {
                 .build()?
                 .into(),
             ],
+            yes: false,
+            quiet: false,
         })
     }
 
@@ -121,11 +126,10 @@ impl ShellSession {
             };
             return BashCmdResult::Finished(json.to_string());
         }
-        if !utils::wait_for_user_acknowledgement() {
+        if !self.yes && !utils::wait_for_user_acknowledgement() {
             return BashCmdResult::Aborted;
         }
         // Execute command
-        // let words = shellwords::split(command).unwrap();
         let mut child = std::process::Command::new("bash")
             .arg("-c")
             .arg(&command)
@@ -141,7 +145,9 @@ impl ShellSession {
                 let mut result = "".to_owned();
                 for line in lines {
                     let line = line.unwrap();
-                    println!("{}", line.bright_black());
+                    if !self.quiet {
+                        println!("{}", line.bright_black());
+                    }
                     result.push_str(&line);
                     result.push_str("\n");
                 }
@@ -152,7 +158,9 @@ impl ShellSession {
                 let mut result = "".to_owned();
                 for line in lines {
                     let line = line.unwrap();
-                    eprintln!("{}", line.bright_black());
+                    if !self.quiet {
+                        eprintln!("{}", line.bright_black());
+                    }
                     result.push_str(&line);
                     result.push_str("\n");
                 }
@@ -257,6 +265,33 @@ impl ShellSession {
 
     pub async fn run_single_prompt(&mut self, prompt: &str) -> anyhow::Result<()> {
         self.run_prompt(&prompt).await?;
+        Ok(())
+    }
+
+    pub async fn run_script(&mut self, script_file: &str) -> anyhow::Result<()> {
+        let file = std::fs::File::open(script_file)?;
+        let mut paragraph = "".to_owned();
+        for line in BufReader::new(file).lines() {
+            let line = line?;
+            let line = line.trim();
+            if line.starts_with("#") {
+                continue;
+            }
+            if line.is_empty() {
+                // End of a paragraph
+                if !paragraph.is_empty() {
+                    self.run_prompt(&paragraph).await?;
+                    paragraph = "".to_owned();
+                }
+            } else {
+                paragraph.push_str(line);
+                paragraph.push_str("\n");
+            }
+        }
+        // End of a paragraph
+        if !paragraph.is_empty() {
+            self.run_prompt(&paragraph).await?;
+        }
         Ok(())
     }
 }
