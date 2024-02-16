@@ -2,6 +2,7 @@ use clap::Parser;
 
 mod config;
 mod session;
+mod utils;
 
 /// GPT-Shell - A natural language based terminal shell powered by ChatGPT.
 #[derive(Parser, Debug)]

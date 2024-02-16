@@ -1,4 +1,3 @@
-use std::io::{self, Write};
 use std::process::Command;
 use std::str::FromStr;
 
@@ -14,6 +13,7 @@ use async_openai::Client;
 use serde_json::json;
 
 use crate::config::{Config, PlatformInfo};
+use crate::utils;
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
@@ -44,14 +44,6 @@ impl ShellSession {
                 .into(),
             ],
         })
-    }
-
-    fn get_prompt() -> anyhow::Result<String> {
-        print!("> ");
-        io::stdout().flush()?;
-        let mut prompt = String::new();
-        io::stdin().read_line(&mut prompt)?;
-        Ok(prompt)
     }
 
     #[allow(deprecated)]
@@ -105,35 +97,29 @@ impl ShellSession {
         Ok(response_message)
     }
 
-    fn execute_bash_command(&self, command: &str) -> anyhow::Result<String> {
-        println!("RUN: {}", command);
-
-        std::thread::sleep(std::time::Duration::from_secs(3));
-
+    fn execute_bash_command(&self, command: &str) -> BashCmdResult {
+        // Show command and get user confirmation before executing
+        println!("⌛️ {}", command);
+        if !utils::wait_for_user_acknowledgement() {
+            return BashCmdResult::Aborted;
+        }
+        // Execute command
         let output = Command::new("bash")
             .args(["-c", &command])
             .output()
             .expect("Failed to execute command");
-
         let status = output.status.code().unwrap();
         let stdout = String::from_utf8(output.stdout).unwrap();
         let stderr = String::from_utf8(output.stderr).unwrap();
-
         let json = json!({
             "status_code": status,
             "stdout": stdout,
             "stderr": stderr,
         });
-
-        // println!("RESULT: {}", json.to_string());
-
-        Ok(json.to_string())
+        BashCmdResult::Finished(json.to_string())
     }
 
-    fn execute_tool_call(
-        &self,
-        tool_call: &ChatCompletionMessageToolCall,
-    ) -> anyhow::Result<String> {
+    fn execute_tool_call(&self, tool_call: &ChatCompletionMessageToolCall) -> (String, bool) {
         assert_eq!(tool_call.function.name, "run_command");
         let args = serde_json::Value::from_str(&tool_call.function.arguments).unwrap();
         let command = args
@@ -142,8 +128,16 @@ impl ShellSession {
             .and_then(|command| command.as_str())
             .map(|command| command.to_owned())
             .unwrap();
-        let result = self.execute_bash_command(&command)?;
-        Ok(result)
+        let (result, aborted) = match self.execute_bash_command(&command) {
+            BashCmdResult::Finished(result) => (result, false),
+            BashCmdResult::Aborted => {
+                let json = json!({
+                    "error": "User cancelled the command. Task should be considered as failed and finished early.",
+                });
+                (json.to_string(), true)
+            }
+        };
+        (result, aborted)
     }
 
     async fn send_chat_request_and_fullfill_tool_calls(
@@ -157,10 +151,10 @@ impl ShellSession {
         if let Some(content) = response.content.as_ref() {
             println!("{}", content);
         }
-        while response.tool_calls.is_some() {
+        'outer: while response.tool_calls.is_some() {
             let tool_calls = response.tool_calls.as_ref().unwrap();
             for tool_call in tool_calls {
-                let tool_result = self.execute_tool_call(tool_call).unwrap();
+                let (tool_result, aborted) = self.execute_tool_call(tool_call);
                 self.history.push(ChatCompletionRequestMessage::Tool(
                     ChatCompletionRequestToolMessage {
                         content: tool_result,
@@ -168,6 +162,9 @@ impl ShellSession {
                         tool_call_id: tool_call.id.clone(),
                     },
                 ));
+                if aborted {
+                    break 'outer;
+                }
             }
             response = self.send_chat_request(self.history.clone()).await?;
             self.history
@@ -195,7 +192,13 @@ impl ShellSession {
 
     pub async fn run_repl(&mut self) -> anyhow::Result<()> {
         loop {
-            let prompt = Self::get_prompt()?;
+            let prompt = utils::read_user_prompt()?;
+            if prompt.trim().is_empty() {
+                continue;
+            }
+            if prompt.trim() == "exit" {
+                return Ok(());
+            }
             self.run_prompt(&prompt).await?;
         }
     }
@@ -204,4 +207,9 @@ impl ShellSession {
         self.run_prompt(&prompt).await?;
         Ok(())
     }
+}
+
+enum BashCmdResult {
+    Finished(String),
+    Aborted,
 }
