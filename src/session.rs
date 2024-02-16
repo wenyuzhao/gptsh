@@ -175,7 +175,7 @@ impl ShellSession {
         Ok(response)
     }
 
-    async fn run_prompt(&mut self, prompt: String) -> anyhow::Result<()> {
+    async fn run_prompt(&mut self, prompt: &str) -> anyhow::Result<()> {
         let mut history = self.history.clone();
         history.push(
             ChatCompletionRequestUserMessageArgs::default()
@@ -189,10 +189,15 @@ impl ShellSession {
         Ok(())
     }
 
-    pub async fn run(&mut self) -> anyhow::Result<()> {
+    pub async fn run_repl(&mut self) -> anyhow::Result<()> {
         loop {
             let prompt = Self::get_prompt()?;
-            self.run_prompt(prompt).await?;
+            self.run_prompt(&prompt).await?;
         }
+    }
+
+    pub async fn run_single_prompt(&mut self, prompt: &str) -> anyhow::Result<()> {
+        self.run_prompt(&prompt).await?;
+        Ok(())
     }
 }
