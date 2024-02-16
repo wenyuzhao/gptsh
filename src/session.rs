@@ -10,6 +10,7 @@ use async_openai::types::{
     CreateChatCompletionRequestArgs, FunctionObjectArgs, Role,
 };
 use async_openai::Client;
+use colored::Colorize;
 use serde_json::json;
 
 use crate::config::{Config, PlatformInfo};
@@ -99,7 +100,7 @@ impl ShellSession {
 
     fn execute_bash_command(&self, command: &str) -> BashCmdResult {
         // Show command and get user confirmation before executing
-        println!("⌛️ {}", command);
+        println!("{} {}", "➜".green(), command);
         if !utils::wait_for_user_acknowledgement() {
             return BashCmdResult::Aborted;
         }
