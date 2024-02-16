@@ -13,7 +13,7 @@ use async_openai::types::{
 use async_openai::Client;
 use serde_json::json;
 
-use crate::config::Config;
+use crate::config::{Config, PlatformInfo};
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
@@ -24,6 +24,7 @@ pub struct ShellSession {
 impl ShellSession {
     pub fn new() -> anyhow::Result<Self> {
         let config = Config::load()?;
+        let platform_info = PlatformInfo::load()?;
         Ok(Self {
             client: Client::with_config(
                 OpenAIConfig::default().with_api_key(&config.openai_api_key),
@@ -31,11 +32,14 @@ impl ShellSession {
             config,
             history: vec![
                 ChatCompletionRequestSystemMessageArgs::default()
-                .content(r#"
+                .content(format!("
                     You should act as a AI terminal shell.
                     The user will send you prompts or descriptions of the tasks, instead of typing the bash commands directly.
                     You should take the prompts and descriptions, and then generate the bash commands to execute the tasks.
-                "#)
+                    Don't do anything else that the user doesn't ask for, or not relevant to the tasks.
+
+                    {}
+                ", platform_info.dump_as_prompt()))
                 .build()?
                 .into(),
             ],

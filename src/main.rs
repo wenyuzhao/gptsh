@@ -17,7 +17,6 @@ struct Args {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    println!("{:?}", args);
     // Create session
     let mut session = session::ShellSession::new()?;
     // Run the session
