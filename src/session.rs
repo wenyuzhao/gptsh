@@ -1,4 +1,5 @@
-use std::process::Command;
+use std::io::{self, BufRead, BufReader};
+use std::process::Stdio;
 use std::str::FromStr;
 
 use async_openai::config::OpenAIConfig;
@@ -35,8 +36,10 @@ impl ShellSession {
                 ChatCompletionRequestSystemMessageArgs::default()
                 .content(format!("
                     You should act as a AI terminal shell.
-                    The user will send you prompts or descriptions of the tasks, instead of typing the bash commands directly.
-                    You should take the prompts and descriptions, and then generate the bash commands to execute the tasks.
+                    The user will send you prompts or descriptions of the tasks, instead of typing the system commands directly.
+                    You should take the prompts and descriptions, and then generate the system commands to execute the tasks.
+                    The system commands should not contain any bash syntax, and can executed by python's `os.system(...)` call.
+                    The system command output are displayed to the user directly, so don't simply repeat the output twice in your response.
                     Don't do anything else that the user doesn't ask for, or not relevant to the tasks.
 
                     {}
@@ -100,7 +103,7 @@ impl ShellSession {
 
     fn execute_bash_command(&self, command: &str) -> BashCmdResult {
         // Show command and get user confirmation before executing
-        println!("{} {}", "➜".green(), command);
+        println!("{} {}", "➜".green().bold(), command.bold());
         if builtins::is_built_in_command(command) {
             let json = match builtins::execute_built_in_command(command) {
                 Ok(_) => json!({
@@ -120,15 +123,44 @@ impl ShellSession {
             return BashCmdResult::Aborted;
         }
         // Execute command
-        let output = Command::new("bash")
-            .args(["-c", &command])
-            .output()
-            .expect("Failed to execute command");
-        let status = output.status.code().unwrap();
-        let stdout = String::from_utf8(output.stdout).unwrap();
-        let stderr = String::from_utf8(output.stderr).unwrap();
+        let mut child = run_shell::cmd!(command)
+            .command
+            .stderr(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let child_stdout = child.stdout.take().unwrap();
+        let child_stderr = child.stderr.take().unwrap();
+        let (status, stdout, stderr) = std::thread::scope(|s| {
+            let stdout_thread = s.spawn(|| -> io::Result<String> {
+                let lines = BufReader::new(child_stdout).lines();
+                let mut result = "".to_owned();
+                for line in lines {
+                    let line = line.unwrap();
+                    println!("{}", line.bright_black());
+                    result.push_str(&line);
+                    result.push_str("\n");
+                }
+                Ok(result)
+            });
+            let stderr_thread = s.spawn(|| -> io::Result<String> {
+                let lines = BufReader::new(child_stderr).lines();
+                let mut result = "".to_owned();
+                for line in lines {
+                    let line = line.unwrap();
+                    eprintln!("{}", line.bright_black());
+                    result.push_str(&line);
+                    result.push_str("\n");
+                }
+                Ok(result)
+            });
+            let status = child.wait().unwrap();
+            let stdout = stdout_thread.join().unwrap().unwrap();
+            let stderr = stderr_thread.join().unwrap().unwrap();
+            (status, stdout, stderr)
+        });
         let json = json!({
-            "status_code": status,
+            "status_code": status.code().unwrap(),
             "stdout": stdout,
             "stderr": stderr,
         });
@@ -165,7 +197,7 @@ impl ShellSession {
         self.history
             .push(self.response_to_request_message(response.clone()));
         if let Some(content) = response.content.as_ref() {
-            println!("{}", content);
+            println!("{}", content.blue());
         }
         'outer: while response.tool_calls.is_some() {
             let tool_calls = response.tool_calls.as_ref().unwrap();
@@ -186,7 +218,7 @@ impl ShellSession {
             self.history
                 .push(self.response_to_request_message(response.clone()));
             if let Some(content) = response.content.as_ref() {
-                println!("{}", content);
+                println!("{}", content.blue());
             }
         }
         Ok(response)
