@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
     // Run the session
     if let Some(ref script_file) = args.script_file {
         session.run_script(script_file).await?;
-    } else if args.prompt.len() > 0 {
+    } else if !args.prompt.is_empty() {
         let prompt = args.prompt.join(" ");
         session.run_single_prompt(&prompt).await?;
     } else {

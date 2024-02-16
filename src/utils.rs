@@ -12,8 +12,7 @@ pub fn get_cwd_short_form() -> String {
     let cwd = cwd.to_str().unwrap();
     let home_dir = home_dir.to_str().unwrap();
     let simplified_home_dir = if cwd.starts_with(home_dir) {
-        let cwd = cwd.replacen(home_dir, "~", 1);
-        cwd
+        cwd.replacen(home_dir, "~", 1)
     } else {
         cwd.to_string()
     };
@@ -38,7 +37,7 @@ pub fn get_cwd_short_form() -> String {
     }
 
     let s = segments.join("/");
-    if !s.starts_with("~") {
+    if !s.starts_with('~') {
         format!("/{}", s)
     } else {
         s

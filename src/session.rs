@@ -32,7 +32,7 @@ impl ShellSession {
         let platform_info = PlatformInfo::load()?;
         Ok(Self {
             client: Client::with_config(
-                OpenAIConfig::default().with_api_key(&config.openai_api_key.clone().unwrap()),
+                OpenAIConfig::default().with_api_key(config.openai_api_key.clone().unwrap()),
             ),
             config,
             history: vec![
@@ -132,7 +132,7 @@ impl ShellSession {
         // Execute command
         let mut child = std::process::Command::new("bash")
             .arg("-c")
-            .arg(&command)
+            .arg(command)
             .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -149,7 +149,7 @@ impl ShellSession {
                         println!("{}", line.bright_black());
                     }
                     result.push_str(&line);
-                    result.push_str("\n");
+                    result.push('\n');
                 }
                 Ok(result)
             });
@@ -162,7 +162,7 @@ impl ShellSession {
                         eprintln!("{}", line.bright_black());
                     }
                     result.push_str(&line);
-                    result.push_str("\n");
+                    result.push('\n');
                 }
                 Ok(result)
             });
@@ -268,7 +268,7 @@ impl ShellSession {
     }
 
     pub async fn run_single_prompt(&mut self, prompt: &str) -> anyhow::Result<()> {
-        self.run_prompt(&prompt).await?;
+        self.run_prompt(prompt).await?;
         Ok(())
     }
 
@@ -278,23 +278,23 @@ impl ShellSession {
         for line in BufReader::new(file).lines() {
             let line = line?;
             let line = line.trim();
-            if line.starts_with("#") {
+            if line.starts_with('#') {
                 continue;
             }
             if line.is_empty() {
                 // End of a paragraph
-                if !paragraph.is_empty() {
-                    self.run_prompt(&paragraph).await?;
+                if !paragraph.trim().is_empty() {
+                    self.run_prompt(paragraph.trim()).await?;
                     paragraph = "".to_owned();
                 }
             } else {
                 paragraph.push_str(line);
-                paragraph.push_str("\n");
+                paragraph.push('\n');
             }
         }
         // End of a paragraph
-        if !paragraph.is_empty() {
-            self.run_prompt(&paragraph).await?;
+        if !paragraph.trim().is_empty() {
+            self.run_prompt(paragraph.trim()).await?;
         }
         Ok(())
     }
