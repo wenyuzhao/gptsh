@@ -86,13 +86,13 @@ impl ShellSession {
                 .function(
                     FunctionObjectArgs::default()
                         .name("run_command")
-                        .description("Run a bash command")
+                        .description("Run a one-liner bash command")
                         .parameters(json!({
                             "type": "object",
                             "properties": {
                                 "command": {
                                     "type": "string",
-                                    "description": "The command to execute",
+                                    "description": "The one-liner bash command to execute. This will be directly sent to `bash -c ...` so be careful with the quotes escaping!",
                                 },
                             },
                             "required": ["command"],
