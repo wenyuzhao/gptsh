@@ -31,7 +31,7 @@ impl ShellSession {
         let platform_info = PlatformInfo::load()?;
         Ok(Self {
             client: Client::with_config(
-                OpenAIConfig::default().with_api_key(config.openai_api_key.clone().unwrap()),
+                OpenAIConfig::default().with_api_key(config.openai.api_key.clone().unwrap()),
             ),
             config,
             history: vec![
@@ -80,7 +80,7 @@ impl ShellSession {
         messages: Vec<ChatCompletionRequestMessage>,
     ) -> anyhow::Result<ChatCompletionResponseMessage> {
         let request = CreateChatCompletionRequestArgs::default()
-            .model(&self.config.model)
+            .model(&self.config.openai.model)
             .messages(messages)
             .tools(vec![ChatCompletionToolArgs::default()
                 .r#type(ChatCompletionToolType::Function)

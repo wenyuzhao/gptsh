@@ -1,0 +1,6 @@
+# gptsh configuration file
+
+# OpenAI API Key and configurations
+[openai]
+api-key = "sk-..."
+model = "gpt-3.5-turbo"
