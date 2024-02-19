@@ -10,6 +10,7 @@ const MINIMAL_CONFIG: &str = include_str!("../config.template.toml");
 #[derive(Deserialize)]
 pub struct Config {
     pub openai: OpenAIConfig,
+    #[serde(default)]
     pub permissions: Permissions,
 }
 
@@ -33,6 +34,12 @@ fn default_true() -> bool {
 pub struct Permissions {
     #[serde(default = "default_true")]
     pub bash: bool,
+}
+
+impl Default for Permissions {
+    fn default() -> Self {
+        Self { bash: true }
+    }
 }
 
 impl Config {
