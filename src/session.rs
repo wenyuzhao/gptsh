@@ -1,21 +1,21 @@
-use std::io::{self, BufRead, BufReader};
-use std::process::Stdio;
+use std::io::{BufRead, BufReader};
 use std::str::FromStr;
+use std::sync::atomic::Ordering;
 
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionMessageToolCall, ChatCompletionRequestAssistantMessage,
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessageArgs,
     ChatCompletionRequestToolMessage, ChatCompletionRequestUserMessageArgs,
-    ChatCompletionResponseMessage, ChatCompletionToolArgs, ChatCompletionToolType,
-    CreateChatCompletionRequestArgs, FunctionObjectArgs, Role,
+    ChatCompletionResponseMessage, CreateChatCompletionRequestArgs, Role,
 };
 use async_openai::Client;
 use colored::Colorize;
 use serde_json::json;
 
 use crate::config::{Config, PlatformInfo};
-use crate::{builtins, utils};
+use crate::tools::TOOLS;
+use crate::utils;
 
 pub struct ShellSession {
     client: Client<OpenAIConfig>,
@@ -82,116 +82,20 @@ impl ShellSession {
         let request = CreateChatCompletionRequestArgs::default()
             .model(&self.config.openai.model)
             .messages(messages)
-            .tools(vec![ChatCompletionToolArgs::default()
-                .r#type(ChatCompletionToolType::Function)
-                .function(
-                    FunctionObjectArgs::default()
-                        .name("run_command")
-                        .description("Run a one-liner bash command")
-                        .parameters(json!({
-                            "type": "object",
-                            "properties": {
-                                "command": {
-                                    "type": "string",
-                                    "description": "The one-liner bash command to execute. This will be directly sent to `bash -c ...` so be careful with the quotes escaping!",
-                                },
-                            },
-                            "required": ["command"],
-                        }))
-                        .build()?,
-                )
-                .build()?])
+            .tools(TOOLS.get_info())
             .build()?;
         let response = self.client.chat().create(request).await?;
         let response_message = response.choices[0].message.clone();
         Ok(response_message)
     }
 
-    fn execute_bash_command(&self, command: &str) -> BashCmdResult {
-        let command = command.trim();
-        // Show command and get user confirmation before executing
-        println!("{} {}", "➜".green().bold(), command.bold());
-
-        if builtins::is_built_in_command(command) {
-            let json = match builtins::execute_built_in_command(command) {
-                Ok(_) => json!({
-                    "status_code": 0,
-                    "stdout": "",
-                    "stderr": "",
-                }),
-                Err(e) => json!({
-                    "status_code": 1,
-                    "stdout": "",
-                    "stderr": e.to_string(),
-                }),
-            };
-            return BashCmdResult::Finished(json.to_string());
-        }
-        if !self.yes && !utils::wait_for_user_acknowledgement() {
-            return BashCmdResult::Aborted;
-        }
-        // Execute command
-        let mut child = std::process::Command::new("bash")
-            .arg("-c")
-            .arg(command)
-            .stderr(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap();
-        let child_stdout = child.stdout.take().unwrap();
-        let child_stderr = child.stderr.take().unwrap();
-        let (status, stdout, stderr) = std::thread::scope(|s| {
-            let stdout_thread = s.spawn(|| -> io::Result<String> {
-                let lines = BufReader::new(child_stdout).lines();
-                let mut result = "".to_owned();
-                for line in lines {
-                    let line = line.unwrap();
-                    if !self.quiet {
-                        println!("{}", line.bright_black());
-                    }
-                    result.push_str(&line);
-                    result.push('\n');
-                }
-                Ok(result)
-            });
-            let stderr_thread = s.spawn(|| -> io::Result<String> {
-                let lines = BufReader::new(child_stderr).lines();
-                let mut result = "".to_owned();
-                for line in lines {
-                    let line = line.unwrap();
-                    if !self.quiet {
-                        eprintln!("{}", line.bright_black());
-                    }
-                    result.push_str(&line);
-                    result.push('\n');
-                }
-                Ok(result)
-            });
-            let status = child.wait().unwrap();
-            let stdout = stdout_thread.join().unwrap().unwrap();
-            let stderr = stderr_thread.join().unwrap().unwrap();
-            (status, stdout, stderr)
-        });
-        let json = json!({
-            "status_code": status.code().unwrap(),
-            "stdout": stdout,
-            "stderr": stderr,
-        });
-        BashCmdResult::Finished(json.to_string())
-    }
-
     fn execute_tool_call(&self, tool_call: &ChatCompletionMessageToolCall) -> (String, bool) {
-        assert_eq!(tool_call.function.name, "run_command");
+        TOOLS.yes.store(self.yes, Ordering::SeqCst);
+        TOOLS.quiet.store(self.quiet, Ordering::SeqCst);
         let args = serde_json::Value::from_str(&tool_call.function.arguments).unwrap();
-        let command = args
-            .as_object()
-            .and_then(|args| args.get("command"))
-            .and_then(|command| command.as_str())
-            .map(|command| command.to_owned())
-            .unwrap();
-        let (result, aborted) = match self.execute_bash_command(&command) {
-            BashCmdResult::Finished(result) => (result, false),
-            BashCmdResult::Aborted => {
+        let (result, aborted) = match TOOLS.run(&tool_call.function.name, args) {
+            Ok(result) => (result, false),
+            _ => {
                 let json = json!({
                     "error": "User cancelled the command. Task should be considered as failed and finished early.",
                 });
@@ -297,9 +201,4 @@ impl ShellSession {
         }
         Ok(())
     }
-}
-
-enum BashCmdResult {
-    Finished(String),
-    Aborted,
 }

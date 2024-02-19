@@ -534,6 +534,7 @@ dependencies = [
  "colored",
  "crossterm",
  "home",
+ "once_cell",
  "serde",
  "serde_json",
  "shellwords",

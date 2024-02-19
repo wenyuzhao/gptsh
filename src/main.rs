@@ -3,6 +3,7 @@ use clap::Parser;
 mod builtins;
 mod config;
 mod session;
+mod tools;
 mod utils;
 
 /// GPT-Shell - A natural language based terminal shell powered by ChatGPT.
