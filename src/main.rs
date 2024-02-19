@@ -33,6 +33,8 @@ async fn main() -> anyhow::Result<()> {
     }
     session.quiet = args.quiet;
     // Run the session
+    let repl = args.prompt.is_empty() && args.script_file.is_none();
+    utils::print_banner(repl);
     if let Some(ref script_file) = args.script_file {
         session.run_script(script_file).await?;
     } else if !args.prompt.is_empty() {

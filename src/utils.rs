@@ -6,6 +6,8 @@ use std::{
 use colored::Colorize;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 
+use crate::utils;
+
 pub fn get_cwd_short_form() -> String {
     let cwd = std::env::current_dir().unwrap();
     let home_dir = home::home_dir().unwrap();
@@ -95,4 +97,21 @@ pub fn wait_for_user_acknowledgement() -> bool {
 /// Check if the inputs are coming from a terminal
 pub fn is_terminal() -> bool {
     io::stdin().is_terminal()
+}
+
+pub fn print_banner(repl: bool) {
+    if repl && utils::is_terminal() {
+        println!(
+            "🦄 Welcome to {}. The AI-powered noob-friendly interactive shell.",
+            "gptsh".blue().bold()
+        );
+    }
+    if whoami::username() == "root" {
+        eprintln!(
+            "🚨 {}",
+            "WARNING: Running as root is dangerous and is not recommended!"
+                .red()
+                .bold()
+        );
+    }
 }
