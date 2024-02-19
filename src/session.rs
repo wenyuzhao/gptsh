@@ -251,12 +251,16 @@ impl ShellSession {
     }
 
     pub async fn run_repl(&mut self) -> anyhow::Result<()> {
-        println!(
-            "🦄 Welcome to {}. The AI-powered noob-friendly interactive shell.",
-            "gptsh".blue().bold()
-        );
+        if utils::is_terminal() {
+            println!(
+                "🦄 Welcome to {}. The AI-powered noob-friendly interactive shell.",
+                "gptsh".blue().bold()
+            );
+        }
         loop {
-            let prompt = utils::read_user_prompt()?;
+            let Some(prompt) = utils::read_user_prompt()? else {
+                return Ok(());
+            };
             if prompt.trim().is_empty() {
                 continue;
             }

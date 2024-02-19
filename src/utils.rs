@@ -1,5 +1,5 @@
 use std::{
-    io::{self, Write},
+    io::{self, IsTerminal, Write},
     path::PathBuf,
 };
 
@@ -44,17 +44,22 @@ pub fn get_cwd_short_form() -> String {
     }
 }
 
-pub fn read_user_prompt() -> anyhow::Result<String> {
+pub fn read_user_prompt() -> anyhow::Result<Option<String>> {
     // Print the prompt
-    print!(
-        "{}{} ",
-        get_cwd_short_form().bold().on_blue().white(),
-        "\u{e0b0}".blue()
-    );
+    if is_terminal() {
+        print!(
+            "{}{} ",
+            get_cwd_short_form().bold().on_blue().white(),
+            "\u{e0b0}".blue()
+        );
+    }
     io::stdout().flush()?;
     let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer)?;
-    Ok(buffer)
+    let size = io::stdin().read_line(&mut buffer)?;
+    if size == 0 {
+        return Ok(None);
+    }
+    Ok(Some(buffer))
 }
 
 pub fn wait_for_user_acknowledgement() -> bool {
@@ -85,4 +90,9 @@ pub fn wait_for_user_acknowledgement() -> bool {
         println!("{}", "Aborted.".red());
     }
     !abort
+}
+
+/// Check if the inputs are coming from a terminal
+pub fn is_terminal() -> bool {
+    io::stdin().is_terminal()
 }
