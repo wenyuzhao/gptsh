@@ -1,4 +1,4 @@
-# `gptsh` - The AI-powered noob-friendly interactive shell.
+# `gptsh` - The AI-powered, noob-friendly interactive shell
 
 <img src="./recording.gif" alt="drawing" width="480"/>
 
