@@ -11,16 +11,7 @@ categories = [
     "command-line-utilities",
 ]
 homepage = "https://github.com/wenyuzhao/gptsh"
-keywords = [
-    "ai",
-    "llm",
-    "cli",
-    "chatgpt",
-    "gpt",
-    "shell",
-    "terminal",
-    "interactive",
-]
+keywords = ["ai", "chatgpt", "gpt", "cli", "shell"]
 authors = ["Wenyu Zhao <wenyu.zhao@anu.edu.au>"]
 readme = "README.md"
 
