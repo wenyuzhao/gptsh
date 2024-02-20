@@ -1,10 +1,14 @@
 use std::{
     io::{self, IsTerminal, Write},
     path::PathBuf,
+    sync::Mutex,
 };
 
 use colored::Colorize;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use once_cell::sync::Lazy;
+use rustyline::error::ReadlineError;
+use rustyline::DefaultEditor;
 
 use crate::utils;
 
@@ -47,21 +51,22 @@ pub fn get_cwd_short_form() -> String {
 }
 
 pub fn read_user_prompt() -> anyhow::Result<Option<String>> {
-    // Print the prompt
-    if is_terminal() {
-        print!(
-            "{}{} ",
-            get_cwd_short_form().bold().on_blue().white(),
-            "\u{e0b0}".blue()
-        );
+    static EDITOR: Lazy<Mutex<DefaultEditor>> =
+        Lazy::new(|| Mutex::new(DefaultEditor::new().unwrap()));
+    let mut rl = EDITOR.lock().unwrap();
+    let prompt = format!(
+        "{}{} ",
+        get_cwd_short_form().bold().on_blue().white(),
+        "\u{e0b0}".blue()
+    );
+    match rl.readline(&prompt) {
+        Ok(line) => {
+            let _ = rl.add_history_entry(line.as_str());
+            Ok(Some(line))
+        }
+        Err(ReadlineError::Eof) => Ok(None),
+        Err(e) => Err(e.into()),
     }
-    io::stdout().flush()?;
-    let mut buffer = String::new();
-    let size = io::stdin().read_line(&mut buffer)?;
-    if size == 0 {
-        return Ok(None);
-    }
-    Ok(Some(buffer))
 }
 
 pub fn wait_for_user_acknowledgement() -> bool {
@@ -95,7 +100,7 @@ pub fn wait_for_user_acknowledgement() -> bool {
 }
 
 /// Check if the inputs are coming from a terminal
-pub fn is_terminal() -> bool {
+pub fn stdin_is_terminal() -> bool {
     io::stdin().is_terminal()
 }
 
@@ -104,7 +109,7 @@ pub fn stdout_is_terminal() -> bool {
 }
 
 pub fn print_banner(repl: bool) {
-    if repl && utils::is_terminal() {
+    if repl && utils::stdin_is_terminal() {
         println!(
             "🦄 Welcome to {}. The AI-powered, noob-friendly interactive shell.",
             "gptsh".blue().bold()

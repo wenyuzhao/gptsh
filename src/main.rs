@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     // Create session
     let mut session = session::ShellSession::new()?;
     session.yes = args.yes;
-    if !utils::is_terminal() {
+    if !utils::stdin_is_terminal() {
         session.yes = true;
     }
     session.quiet = args.quiet;
