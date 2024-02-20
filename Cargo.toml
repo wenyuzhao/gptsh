@@ -1,6 +1,6 @@
 [package]
 name = "gptsh"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "The AI-powered, noob-friendly interactive shell."
