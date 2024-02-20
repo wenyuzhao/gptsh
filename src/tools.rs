@@ -196,9 +196,30 @@ static RUN_COMMAND: Lazy<GPTFunction> = Lazy::new(|| {
     }
 });
 
+static CHANGE_CWD: Lazy<GPTFunction> = Lazy::new(|| GPTFunction {
+    name: "chdir",
+    desc: "Changes the current working directory of the terminal to another directory",
+    params: vec![Param::new(
+        "path",
+        "string",
+        true,
+        "The path to the new working directory",
+    )],
+    handler: Box::new(|params| -> Result<String, ToolError> {
+        let path = params["path"].as_str().unwrap().trim();
+        println!("{} {}", "➜".blue().bold(), format!("cd {path}").bold());
+        let result = match std::env::set_current_dir(path) {
+            Ok(_) => "done".to_string(),
+            Err(e) => format!("chdir error: {}", e),
+        };
+        Ok(result)
+    }),
+});
+
 pub static TOOLS: Lazy<Tools> = Lazy::new(|| {
     Tools::new(&[
         &RUN_COMMAND,
+        &CHANGE_CWD,
         // Add more tools here
     ])
 });
