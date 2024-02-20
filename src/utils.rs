@@ -99,6 +99,10 @@ pub fn is_terminal() -> bool {
     io::stdin().is_terminal()
 }
 
+pub fn stdout_is_terminal() -> bool {
+    io::stdout().is_terminal()
+}
+
 pub fn print_banner(repl: bool) {
     if repl && utils::is_terminal() {
         println!(

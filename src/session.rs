@@ -10,8 +10,8 @@ use async_openai::types::{
     ChatCompletionResponseMessage, CreateChatCompletionRequestArgs, Role,
 };
 use async_openai::Client;
-use colored::Colorize;
 use serde_json::json;
+use termimad::MadSkin;
 
 use crate::config::{Config, PlatformInfo};
 use crate::tools::TOOLS;
@@ -48,6 +48,8 @@ impl ShellSession {
 
                     Apart from a terminal shell, when necessary, you also need to act as a normal ChatGPT to fullfill any generic tasks that the user asks you to do.
                     Don't refuse to do anything that the user asks you to do, unless it's illegal, or violates the user's privacy.
+
+                    You may use markdown to format your responses. Always use '*' not '-' for unordered list items.
 
                     {}
                 ", platform_info.dump_as_prompt()))
@@ -108,6 +110,21 @@ impl ShellSession {
         (result, aborted)
     }
 
+    fn print_assistant_output(&self, content: &str) {
+        let content = content.trim();
+        if !utils::stdout_is_terminal() {
+            println!("{}", content);
+            return;
+        }
+        use termimad::crossterm::style::Color::*;
+        let mut skin = MadSkin::default();
+        skin.set_fg(Blue);
+        for i in 0..8 {
+            skin.headers[i].align = termimad::Alignment::Left;
+        }
+        skin.print_text(&format!("{}\n", content));
+    }
+
     async fn send_chat_request_and_fullfill_tool_calls(
         &mut self,
         messages: Vec<ChatCompletionRequestMessage>,
@@ -117,7 +134,7 @@ impl ShellSession {
         self.history
             .push(self.response_to_request_message(response.clone()));
         if let Some(content) = response.content.as_ref() {
-            println!("{}", content.blue());
+            self.print_assistant_output(content);
         }
         'outer: while response.tool_calls.is_some() {
             let tool_calls = response.tool_calls.as_ref().unwrap();
@@ -138,7 +155,7 @@ impl ShellSession {
             self.history
                 .push(self.response_to_request_message(response.clone()));
             if let Some(content) = response.content.as_ref() {
-                println!("{}", content.blue());
+                self.print_assistant_output(content);
             }
         }
         Ok(response)
