@@ -102,7 +102,7 @@ pub fn is_terminal() -> bool {
 pub fn print_banner(repl: bool) {
     if repl && utils::is_terminal() {
         println!(
-            "🦄 Welcome to {}. The AI-powered noob-friendly interactive shell.",
+            "🦄 Welcome to {}. The AI-powered, noob-friendly interactive shell.",
             "gptsh".blue().bold()
         );
     }

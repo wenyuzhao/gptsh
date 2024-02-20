@@ -6,7 +6,7 @@ mod session;
 mod tools;
 mod utils;
 
-/// GPT-Shell - A natural language based terminal shell powered by ChatGPT.
+/// gptsh - The AI-powered, noob-friendly interactive shell.
 #[derive(Parser, Debug)]
 #[command(version = clap::crate_version!())]
 struct Args {
