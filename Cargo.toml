@@ -1,9 +1,28 @@
 [package]
 name = "gptsh"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
-description = "reserved"
 license = "MIT"
+description = "The AI-powered, noob-friendly interactive shell."
+repository = "https://github.com/wenyuzhao/gptsh"
+categories = [
+    "accessibility",
+    "command-line-interface",
+    "command-line-utilities",
+]
+homepage = "https://github.com/wenyuzhao/gptsh"
+keywords = [
+    "ai",
+    "llm",
+    "cli",
+    "chatgpt",
+    "gpt",
+    "shell",
+    "terminal",
+    "interactive",
+]
+authors = ["Wenyu Zhao <wenyu.zhao@anu.edu.au>"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
