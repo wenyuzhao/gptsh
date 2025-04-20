@@ -1,0 +1,21 @@
+[project]
+name = "autosh"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+autosh = "autosh.main:main"
+ash = "autosh.main:main"
+
+[tool.hatch.build.targets.sdist]
+include = ["autosh"]
+
+[tool.hatch.build.targets.wheel]
+include = ["autosh"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
