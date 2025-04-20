@@ -30,22 +30,41 @@ class MarkdowmPrinter:
             except StopAsyncIteration:
                 self.__eof = True
 
+    async def __check_unordered_list_label(self) -> bool:
+        if self.__eof:
+            return False
+        await self.__ensure_length(2)
+        buf = self.__buf
+        if len(buf) < 2:
+            return False
+        if buf[0] in ["-", "+", "*"] and buf[1] == " ":
+            return True
+        return False
+
     async def __check_ordered_list_label(self) -> bool:
         if self.__eof:
             return False
-        await self.__ensure_length(4)
+        await self.__ensure_length(5)
         buf = self.__buf
         # \d+\.
         if len(buf) == 0:
             return False
         if not buf[0].isnumeric():
             return False
-        for i in range(1, 4):
+        has_dot = False
+        for i in range(1, 5):
             if i >= len(buf):
                 return False
             c = buf[i]
             if c == ".":
-                return True
+                if has_dot:
+                    return False
+                has_dot = True
+                continue
+            if c == " ":
+                if has_dot:
+                    return True
+                return False
             if c.isnumeric():
                 continue
         return False
@@ -256,9 +275,7 @@ class MarkdowmPrinter:
                 return
             if ordered and not await self.__check_ordered_list_label():
                 return
-            if not ordered and (
-                (self.peek() not in ["-", "+", "*"]) or await self.check("--")
-            ):
+            if not ordered and not await self.__check_unordered_list_label():
                 return
             if not ordered:
                 await self.next()
@@ -314,6 +331,8 @@ class MarkdowmPrinter:
                 if self.peek() == "\n":
                     indent = 0
                 await self.next()
+            if self.peek() is None:
+                break
             if not start:
                 self.print("\n")
             start = False
@@ -337,7 +356,7 @@ class MarkdowmPrinter:
                 case "-" | "+" | "*":
                     await self.parse_list(False)
                 # Ordered list
-                case _ if c.isnumeric():
+                case _ if await self.__check_ordered_list_label():
                     await self.parse_list(True)
                 # Blockquote
                 case ">":
@@ -347,7 +366,6 @@ class MarkdowmPrinter:
                     await self.parse_paragraph()
             self.print("\x1b[0m\x1b[0m\x1b[0m")  # Reset all
         self.print("\x1b[0m")  # Reset all
-        self.print("\n")
 
     def __await__(self):
         return self.parse_doc().__await__()

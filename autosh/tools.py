@@ -5,6 +5,7 @@ from agentia.plugins import Plugin, tool
 import rich
 import subprocess
 from rich.prompt import Confirm
+from rich.panel import Panel
 
 
 class CLIPlugin(Plugin):
@@ -45,19 +46,30 @@ class CLIPlugin(Plugin):
             return {
                 "error": "The user declined to execute the command.",
             }
-        print("Starting command execution...")
         proc_result = subprocess.run(
             ["bash", "-c", command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             # shell=True,
         )
-        console = rich.console.Console()
-        if proc_result.stdout:
-            console.print(proc_result.stdout.decode("utf-8"), style="dim")
-        if proc_result.stderr:
-            rich.print(proc_result.stderr.decode("utf-8"))
-        print("Exec 3")
+        text = f"[bold]$[/bold] {command}\n\n"
+        stdout = proc_result.stdout.decode("utf-8").strip()
+        stderr = proc_result.stderr.decode("utf-8").strip()
+        if stdout:
+            text += stdout + "\n"
+        if stderr:
+            if stdout:
+                text += "\n---\n"
+            text += stderr + "\n"
+
+        panel = Panel.fit(text, title=f"Run Command", title_align="left", style="dim")
+        rich.print(panel)
+        # console = rich.console.Console()
+        # if proc_result.stdout:
+        #     console.print(proc_result.stdout.decode("utf-8"), style="dim")
+        # if proc_result.stderr:
+        #     console.print(proc_result.stderr.decode("utf-8"), style="dim")
+        # print("Exec 3")
         result = {
             "stdout": proc_result.stdout.decode("utf-8"),
             "stderr": proc_result.stderr.decode("utf-8"),

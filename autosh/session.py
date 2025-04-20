@@ -63,12 +63,16 @@ class Session:
                         return
                     break
 
+            content = {"v": ""}
+
             async def gen():
+                content["v"] = buf
                 if buf:
                     yield buf
                 while True:
                     try:
                         s = await anext(chunks)
+                        content["v"] += s
                         for c in s:
                             yield c
                     except StopAsyncIteration:
