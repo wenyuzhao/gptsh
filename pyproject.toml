@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "agentia>=0.0.3",
+    "asyncio>=3.4.3",
+    "python-dotenv>=1.1.0",
+    "rich>=14.0.0",
+    "typer>=0.12.5",
+]
 
 [project.scripts]
 autosh = "autosh.main:main"
@@ -15,6 +21,9 @@ include = ["autosh"]
 
 [tool.hatch.build.targets.wheel]
 include = ["autosh"]
+
+[tool.uv.sources]
+agentia = { path = "../agentia", editable = true }
 
 [build-system]
 requires = ["hatchling"]
