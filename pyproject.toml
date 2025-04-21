@@ -1,11 +1,11 @@
 [project]
 name = "autosh"
-version = "0.1.0"
+version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "agentia>=0.0.3",
+    "agentia>=0.0.5",
     "asyncio>=3.4.3",
     "markdownify>=1.1.0",
     "pydantic>=2.11.3",
@@ -26,8 +26,8 @@ include = ["autosh"]
 [tool.hatch.build.targets.wheel]
 include = ["autosh"]
 
-[tool.uv.sources]
-agentia = { path = "../agentia", editable = true }
+# [tool.uv.sources]
+# agentia = { path = "../agentia", editable = true }
 
 [build-system]
 requires = ["hatchling"]
