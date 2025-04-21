@@ -50,11 +50,10 @@ def cmd_result_panel(
     if isinstance(err, str):
         err = err.strip()
     if not out and not err:
-        rich.print(f"\n{title}\n")
+        rich.print(title)
     else:
         text = out if out else ""
-        text += (("\n---\n" if out else "") + err + "\n") if err else ""
-        rich.print()
+        text += (("\n---\n" if out else "") + err) if err else ""
         panel = Panel.fit(text, title=title, title_align="left", style="dim")
         rich.print(panel)
     if not CLI_OPTIONS.quiet:
