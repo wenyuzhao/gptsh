@@ -3,7 +3,6 @@ import sys
 from agentia import Agent
 from agentia.chat_completion import MessageStream
 from agentia.message import UserMessage
-from pydantic import BaseModel, Field
 
 from autosh.config import CLI_OPTIONS, CONFIG
 from autosh.md import stream_md
@@ -32,7 +31,7 @@ YOUR HOST OS INFO: {platform.platform()}
 class Session:
     def __init__(self):
         self.agent = Agent(
-            model=CONFIG.model,
+            model=CONFIG.model if not CLI_OPTIONS.think else CONFIG.think_model,
             api_key=CONFIG.api_key,
             instructions=INSTRUCTIONS,
             tools=[CLIPlugin()],

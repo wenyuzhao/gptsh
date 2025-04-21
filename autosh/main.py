@@ -60,6 +60,12 @@ def print_help():
     options = [
         ["--yes", "-y", "Auto confirm all prompts."],
         ["--quiet", "-q", "Suppress all output."],
+        [
+            "--model",
+            "-m",
+            f"The LLM model to use. [dim]Default: {CONFIG.model} ({CONFIG.think_model} for reasoning).[/dim]",
+        ],
+        ["--think", "", "Use the reasoning models to think more before operating."],
         ["--help", "-h", "Show this message and exit."],
     ]
 
@@ -102,6 +108,8 @@ def parse_args() -> tuple[str | None, list[str]]:
     p.add_argument("--help", "-h", action="store_true")
     p.add_argument("--yes", "-y", action="store_true")
     p.add_argument("--quiet", "-q", action="store_true")
+    p.add_argument("--think", action="store_true")
+    p.add_argument("--model", "-m", type=str, default=None)
     p.add_argument("PROMPT_OR_FILE", nargs="?", default=None)
     p.add_argument("ARGS", nargs=argparse.REMAINDER)
 
@@ -118,6 +126,15 @@ def parse_args() -> tuple[str | None, list[str]]:
 
     CLI_OPTIONS.yes = args.yes
     CLI_OPTIONS.quiet = args.quiet
+
+    if args.model:
+        if args.think:
+            CONFIG.think_model = args.model
+        else:
+            CONFIG.model = args.model
+
+    if args.think:
+        CLI_OPTIONS.think = True
 
     prompt = args.PROMPT_OR_FILE.strip() if args.PROMPT_OR_FILE else None
 

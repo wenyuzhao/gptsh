@@ -8,6 +8,10 @@ USER_CONFIG_PATH = Path.home() / ".config" / "autosh" / "config.toml"
 
 class Config(BaseModel):
     model: str = Field(default="openai/gpt-4.1", description="The LLM model to use")
+    think_model: str = Field(
+        default="openai/o4-mini-high",
+        description="The LLM model to use for reasoning before executing commands",
+    )
     api_key: str | None = Field(default=None, description="OpenRouter API key.")
 
     @staticmethod
@@ -25,6 +29,7 @@ CONFIG = Config.load()
 class CLIOptions(BaseModel):
     yes: bool = False
     quiet: bool = False
+    think: bool = False
 
     prompt: str | None = None
     """The prompt to execute"""
