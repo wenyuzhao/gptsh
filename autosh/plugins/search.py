@@ -1,12 +1,8 @@
 from agentia.plugins import tool, Plugin
 from typing import Annotated, override
 import os
-
-import rich
 from tavily import TavilyClient
-from dataforseo_client.api.serp_api import SerpApi
 
-from autosh.config import CLI_OPTIONS
 from autosh.plugins import banner
 
 

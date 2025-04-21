@@ -4,8 +4,6 @@ from typing import Annotated
 from agentia.plugins import Plugin, tool
 import rich
 import subprocess
-from rich.prompt import Confirm
-from rich.panel import Panel
 from enum import StrEnum
 
 from autosh.config import CLI_OPTIONS

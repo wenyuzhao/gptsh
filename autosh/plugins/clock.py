@@ -1,7 +1,6 @@
 import datetime
 from agentia.plugins import tool, Plugin
 import tzlocal
-import rich
 
 from autosh.plugins import banner
 

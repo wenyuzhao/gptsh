@@ -1,9 +1,6 @@
 import os
 from typing import AsyncGenerator, Literal
 
-import rich
-import rich.panel
-from rich.console import Console
 
 HIGHLIGHT_COLOR_START = "35"
 HIGHLIGHT_COLOR_END = "0"

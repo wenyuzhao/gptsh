@@ -5,10 +5,8 @@ from typing import Annotated, override
 import requests
 from markdownify import markdownify
 import uuid
-import rich
 from tavily import TavilyClient
 
-from autosh.config import CLI_OPTIONS
 from autosh.plugins import banner
 
 
