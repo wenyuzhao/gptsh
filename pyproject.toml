@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "agentia>=0.0.3",
     "asyncio>=3.4.3",
+    "pydantic>=2.11.3",
     "python-dotenv>=1.1.0",
     "rich>=14.0.0",
     "typer>=0.12.5",

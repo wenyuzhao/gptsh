@@ -3,6 +3,7 @@ from typing import AsyncGenerator, Literal
 
 import rich
 import rich.panel
+from rich.console import Console
 
 HIGHLIGHT_COLOR_START = "35"
 HIGHLIGHT_COLOR_END = "0"
@@ -72,9 +73,9 @@ class MarkdowmPrinter:
     async def check(self, s: str):
         if len(s) == 0:
             return True
-        if self.__eof:
-            return False
         await self.__ensure_length(len(s))
+        if len(self.__buf) < len(s):
+            return False
         return self.__buf[0 : len(s)] == s
 
     async def next(self):
@@ -244,6 +245,7 @@ class MarkdowmPrinter:
         while not await self.check("\n```"):
             c = await self.next()
             if c is None:
+                self.print("\n")
                 return
             self.print(c)
         self.print("\n```\n")
@@ -351,7 +353,7 @@ class MarkdowmPrinter:
                     await self.next()
                     await self.next()
                     width = min(os.get_terminal_size().columns, 80)
-                    self.print("\x1b[2m" + "-" * width + "\x1b[22m\n")
+                    self.print("\x1b[2m" + "─" * width + "\x1b[22m\n")
                 # Unordered list
                 case "-" | "+" | "*":
                     await self.parse_list(False)
