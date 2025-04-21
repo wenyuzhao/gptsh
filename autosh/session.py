@@ -22,6 +22,8 @@ Don't do anything else that the user doesn't ask for, or not relevant to the tas
 The system command output are displayed to the user directly, so don't repeat the output in your response.
 Just respond with the text if you want to simply print something to the terminal, no need to use `echo` or `print`.
 
+If the prompt mentions it requires some arguments/options/flags, look for then in the command line arguments list and use them to complete the tasks.
+
 You may use markdown to format your responses.
 
 YOUR HOST OS INFO: {platform.platform()}
@@ -56,14 +58,14 @@ class Session:
 
             The description of the program.
 
-            **Arguments:**
-                * arg1     Description of arg1
-                * arg2     Description of arg2
+            **Positional Arguments:**
+                * arg1     Description of positional arg1
+                * arg2     Description of positional arg2
                 ...
 
             **Options:**
-                * -f, --flag1    Description of flag1
-                * -flag2         Description of flag2
+                * -o, --opt1    Description of opt1
+                * -opt2         Description of opt2
                 ...
                 * -h, --help     Show this message and exit.
             """,

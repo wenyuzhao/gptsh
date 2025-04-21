@@ -34,6 +34,18 @@ class Color(StrEnum):
 class CLIPlugin(Plugin):
     EXIT_CODE = 0
 
+    def confirm(self, message: str):
+        if CLI_OPTIONS.yes:
+            return True
+        if not CLI_OPTIONS.quiet:
+            rich.print()
+        result = Confirm.ask(
+            f"[magenta]{message}[/magenta]", default=True, case_sensitive=False
+        )
+        if not CLI_OPTIONS.quiet:
+            rich.print()
+        return result
+
     @tool
     def print(
         self,
@@ -107,6 +119,39 @@ class CLIPlugin(Plugin):
         return content
 
     @tool
+    def write(
+        self,
+        path: Annotated[str, "The path to the file to write"],
+        content: Annotated[str, "The content to write to the file"],
+        create: Annotated[
+            bool, "Whether to create the file if it does not exist"
+        ] = True,
+        append: Annotated[bool, "Whether to append to the file if it exists"] = False,
+    ):
+        """
+        Write or append text content to a file.
+        """
+        rich.print(
+            f"[bold magenta]{'WRITE' if not append else 'APPEND'}[/bold magenta] [italic magenta]{path}[/italic magenta] [dim]({len(content)} bytes)[dim]"
+        )
+        if not create and not os.path.exists(path):
+            raise FileNotFoundError(f"File `{path}` does not exist.")
+        if not create and not os.path.isfile(path):
+            raise FileNotFoundError(f"Path `{path}` is not a file.")
+        if path == str(CLI_OPTIONS.script):
+            raise FileExistsError(
+                f"No, you cannot overwrite the script file `{path}`. You're likely writing to it by mistake."
+            )
+        if not self.confirm("Write file?"):
+            return {"error": "The user declined the write operation."}
+        flag = "a" if append else "w"
+        if create:
+            flag += "+"
+        with open(path, flag) as f:
+            f.write(content)
+        return "DONE. You can continue and no need to repeat the text"
+
+    @tool
     def stdin_readline(
         self,
         prompt: Annotated[
@@ -146,27 +191,10 @@ class CLIPlugin(Plugin):
         """
         Run a one-liner bash command
         """
-        # rich.print(
-        #     f"[bold magenta]➜[/bold magenta] [italic magenta]{command}[/italic magenta]"
-        # )
-        # rich.print(f"[dim]{explanation}[/dim]")
-
-        def confirm():
-            if CLI_OPTIONS.yes:
-                return True
-            if not CLI_OPTIONS.quiet:
-                rich.print()
-            return Confirm.ask(
-                "[magenta]Execute this command?[/magenta]",
-                default=True,
-                case_sensitive=False,
-            )
 
         def run():
             cmd = ["bash", "-c", command]
             return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        decline_error = {"error": "The user declined to execute the command."}
 
         # Print the command and explanation
         if CLI_OPTIONS.quiet and not CLI_OPTIONS.yes:
@@ -182,8 +210,8 @@ class CLIPlugin(Plugin):
             rich.print(panel)
 
         # Ask for confirmation
-        if not confirm():
-            return decline_error
+        if not self.confirm("Execute this command?"):
+            return {"error": "The user declined to execute the command."}
 
         # Execute the command
         proc_result = run()

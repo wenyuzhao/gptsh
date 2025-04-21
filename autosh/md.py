@@ -78,6 +78,21 @@ class MarkdowmPrinter:
             return False
         return self.__buf[0 : len(s)] == s
 
+    async def check_non_paragraph_block_start(self):
+        await self.__ensure_length(3)
+        buf = self.__buf[:3] if len(self.__buf) >= 3 else self.__buf
+        if buf.startswith("```"):
+            return True
+        if buf.startswith("---"):
+            return True
+        if buf.startswith("> "):
+            return True
+        if await self.__check_ordered_list_label():
+            return True
+        if await self.__check_unordered_list_label():
+            return True
+        return False
+
     async def next(self):
         c = self.__buf[0] if len(self.__buf) > 0 else None
         self.__buf = self.__buf[1:] if len(self.__buf) > 0 else ""
@@ -229,7 +244,7 @@ class MarkdowmPrinter:
     async def parse_paragraph(self):
         while True:
             await self.parse_single_line_text()
-            if self.peek() != "\n":
+            if self.peek() != "\n" and not await self.check_non_paragraph_block_start():
                 await self.next()
                 break
             else:
