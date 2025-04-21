@@ -58,14 +58,11 @@ class Session:
 
             The description of the program.
 
-            **Positional Arguments:**
-                * arg1     Description of positional arg1
-                * arg2     Description of positional arg2
-                ...
-
             **Options:**
-                * -o, --opt1    Description of opt1
-                * -opt2         Description of opt2
+
+                * -f, --foo     Description of foo
+                * -b, --bar     Description of bar
+                * --baz         Description of baz
                 ...
                 * -h, --help     Show this message and exit.
             """,

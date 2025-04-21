@@ -94,7 +94,7 @@ class CLIPlugin(Plugin):
         if not CLI_OPTIONS.script:
             return CLI_OPTIONS.args
         return {
-            "script": CLI_OPTIONS.script,
+            "script": str(CLI_OPTIONS.script),
             "args": CLI_OPTIONS.args,
         }
 
