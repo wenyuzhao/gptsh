@@ -3,6 +3,7 @@ import sys
 from agentia import Agent
 from agentia.chat_completion import MessageStream
 from agentia.message import UserMessage
+from pydantic import BaseModel, Field
 
 from autosh.config import CLI_OPTIONS, CONFIG
 from autosh.md import stream_md
@@ -34,9 +35,53 @@ class Session:
             tools=[CLIPlugin()],
         )
 
-    def exit_with_error(self, msg: str):
+    def _exit_with_error(self, msg: str):
         rich.print(f"[bold red]Error:[/bold red] [red]{msg}")
         sys.exit(1)
+
+    async def _print_help_and_exit(self, prompt: str):
+        agent = Agent(
+            model=CONFIG.model,
+            api_key=CONFIG.api_key,
+            instructions=f"""
+            This is a CLI program logic written in natural language.
+            Please help me to generate the CLI --help message for this CLI app.
+            Just output the help message, no need to add any other text.
+
+            RESPONSE FORMAT:
+
+            **Usage:** ...
+
+            The description of the program.
+
+            **Arguments:**
+                * arg1     Description of arg1
+                * arg2     Description of arg2
+                ...
+
+            **Options:**
+                * -f, --flag1    Description of flag1
+                * -flag2         Description of flag2
+                ...
+                * -h, --help     Show this message and exit.
+            """,
+        )
+        agent.history.add(self._get_argv_message())
+        completion = agent.chat_completion(prompt, stream=True)
+        async for stream in completion:
+            await self.__render_streamed_markdown(stream)
+        sys.exit(0)
+
+    def _get_argv_message(self):
+        args = str(CLI_OPTIONS.args)
+        if not CLI_OPTIONS.script:
+            cmd = "PROMPT"
+        else:
+            cmd = CLI_OPTIONS.script.name
+        return UserMessage(
+            content=f"PROGRAM NAME: {cmd}\n\nCOMMAND LINE ARGS: {args}",
+            role="user",
+        )
 
     async def exec_prompt(self, prompt: str):
         # Clean up the prompt
@@ -47,16 +92,13 @@ class Session:
         # skip shebang line
         if prompt.startswith("#!"):
             prompt = prompt.split("\n", 1)[1]
+        if len(CLI_OPTIONS.args) == 1 and (
+            CLI_OPTIONS.args[0] == "-h" or CLI_OPTIONS.args[0] == "--help"
+        ):
+            await self._print_help_and_exit(prompt)
         # Execute the prompt
         CLI_OPTIONS.prompt = prompt
-        if CLI_OPTIONS.args:
-            args = str(CLI_OPTIONS.args)
-            self.agent.history.add(
-                UserMessage(
-                    content="COMMAND LINE ARGS: " + args,
-                    role="user",
-                )
-            )
+        self.agent.history.add(self._get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
             self.agent.history.add(
                 UserMessage(
@@ -70,7 +112,7 @@ class Session:
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
-            self.exit_with_error("No prompt is piped to stdin.")
+            self._exit_with_error("No prompt is piped to stdin.")
         prompt = sys.stdin.read()
         if not prompt:
             sys.exit(0)

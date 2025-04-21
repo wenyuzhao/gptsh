@@ -355,7 +355,7 @@ class MarkdowmPrinter:
                     width = min(os.get_terminal_size().columns, 80)
                     self.print("\x1b[2m" + "─" * width + "\x1b[22m\n")
                 # Unordered list
-                case "-" | "+" | "*":
+                case _ if await self.__check_unordered_list_label():
                     await self.parse_list(False)
                 # Ordered list
                 case _ if await self.__check_ordered_list_label():
