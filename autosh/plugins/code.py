@@ -43,7 +43,7 @@ class CodePlugin(Plugin):
         with redirect_stdout(out):
             with redirect_stderr(err):
                 try:
-                    exec(python_code)
+                    exec(python_code, globals())
                     o = out.getvalue()
                     e = err.getvalue()
                     title = "[green][bold]✔[/bold] Finished[/green]"
