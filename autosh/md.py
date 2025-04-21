@@ -180,7 +180,11 @@ class MarkdowmPrinter:
                         self.print("\x1b[1m")
                         styles.append("bold")
                 # Italic
-                case "*" | "_" if not_code:
+                case "*" | "_" if (
+                    not_code
+                    and not await self.check("* ")
+                    and not await self.check("_ ")
+                ):
                     await self.next()
                     if (i := find("italic")) is not None:
                         if not outer_is_italic:

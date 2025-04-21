@@ -26,6 +26,7 @@ app = typer.Typer(
 async def start_session(prompt: str | None, args: list[str]):
     CLI_OPTIONS.args = args
     session = Session()
+    await session.init()
     piped_stdin = not sys.stdin.isatty()
     if piped_stdin and not CLI_OPTIONS.yes:
         rich.print(
@@ -145,7 +146,7 @@ def parse_args() -> tuple[str | None, list[str]]:
 
 
 def main():
-    dotenv.load_dotenv()
+    # dotenv.load_dotenv()
     prompt, args = parse_args()
 
     if CONFIG.api_key is None:

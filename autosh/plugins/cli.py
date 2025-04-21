@@ -10,6 +10,8 @@ from enum import StrEnum
 
 from autosh.config import CLI_OPTIONS
 
+from . import banner, confirm, cmd_result_panel, cmd_preview_panel
+
 
 class Color(StrEnum):
     black = "black"
@@ -33,18 +35,6 @@ class Color(StrEnum):
 
 class CLIPlugin(Plugin):
     EXIT_CODE = 0
-
-    def confirm(self, message: str):
-        if CLI_OPTIONS.yes:
-            return True
-        if not CLI_OPTIONS.quiet:
-            rich.print()
-        result = Confirm.ask(
-            f"[magenta]{message}[/magenta]", default=True, case_sensitive=False
-        )
-        if not CLI_OPTIONS.quiet:
-            rich.print()
-        return result
 
     @tool
     def print(
@@ -76,10 +66,7 @@ class CLIPlugin(Plugin):
         """
         Changes the current working directory of the terminal to another directory.
         """
-        if not CLI_OPTIONS.quiet:
-            rich.print(
-                f"[bold magenta]CWD[/bold magenta] [italic magenta]{path}[/italic magenta]"
-            )
+        banner("CWD", path)
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path `{path}` does not exist.")
         os.chdir(path)
@@ -89,8 +76,7 @@ class CLIPlugin(Plugin):
         """
         Get the command line arguments.
         """
-        if not CLI_OPTIONS.quiet:
-            rich.print(f"[bold magenta]GET ARGV[/bold magenta]")
+        banner("GET ARGV")
         if not CLI_OPTIONS.script:
             return CLI_OPTIONS.args
         return {
@@ -106,10 +92,7 @@ class CLIPlugin(Plugin):
         """
         Read a file and print its content.
         """
-        if not CLI_OPTIONS.quiet:
-            rich.print(
-                f"[bold magenta]READ[/bold magenta] [italic magenta]{path}[/italic magenta]"
-            )
+        banner("READ", path)
         if not os.path.exists(path):
             raise FileNotFoundError(f"File `{path}` does not exist.")
         if not os.path.isfile(path):
@@ -131,9 +114,8 @@ class CLIPlugin(Plugin):
         """
         Write or append text content to a file.
         """
-        rich.print(
-            f"[bold magenta]{'WRITE' if not append else 'APPEND'}[/bold magenta] [italic magenta]{path}[/italic magenta] [dim]({len(content)} bytes)[dim]"
-        )
+        banner("WRITE" if not append else "APPEND", path, f"({len(content)} bytes)")
+
         if not create and not os.path.exists(path):
             raise FileNotFoundError(f"File `{path}` does not exist.")
         if not create and not os.path.isfile(path):
@@ -142,7 +124,7 @@ class CLIPlugin(Plugin):
             raise FileExistsError(
                 f"No, you cannot overwrite the script file `{path}`. You're likely writing to it by mistake."
             )
-        if not self.confirm("Write file?"):
+        if not confirm("Write file?"):
             return {"error": "The user declined the write operation."}
         flag = "a" if append else "w"
         if create:
@@ -172,6 +154,8 @@ class CLIPlugin(Plugin):
         """
         if sys.stdin.isatty():
             raise RuntimeError("No piped input. stdin is a terminal.")
+        if not CLI_OPTIONS.quiet:
+            rich.print("[bold magenta]READ ALL STDIN[/bold magenta]\n")
         if CLI_OPTIONS.stdin_is_script:
             raise RuntimeError("No piped input from stdin")
         return sys.stdin.read()
@@ -185,7 +169,7 @@ class CLIPlugin(Plugin):
         ],
         explanation: Annotated[
             str,
-            "Explain what this command does, and how are you going to use it.",
+            "Explain what this command does, and what are you going to use it for.",
         ],
     ):
         """
@@ -197,20 +181,14 @@ class CLIPlugin(Plugin):
             return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Print the command and explanation
-        if CLI_OPTIONS.quiet and not CLI_OPTIONS.yes:
-            text = f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]"
-            rich.print(text)
-        elif CLI_OPTIONS.quiet:
-            pass
-        else:
-            text = f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]\n\n[dim]{explanation}[/dim]"
-            panel = Panel.fit(
-                text, title=f"[magenta]Run Command[/magenta]", title_align="left"
-            )
-            rich.print(panel)
+        cmd_preview_panel(
+            title="Run Command",
+            content=f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]\n\n[dim]{explanation}[/dim]",
+            short=f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]",
+        )
 
         # Ask for confirmation
-        if not self.confirm("Execute this command?"):
+        if not confirm("Execute this command?"):
             return {"error": "The user declined to execute the command."}
 
         # Execute the command
@@ -218,21 +196,16 @@ class CLIPlugin(Plugin):
 
         # Print the result
         if not CLI_OPTIONS.quiet:
-            out = proc_result.stdout.decode("utf-8").strip()
-            err = proc_result.stderr.decode("utf-8").strip()
+            out = proc_result.stdout.decode("utf-8")
+            err = proc_result.stderr.decode("utf-8")
             if not out and not err:
-                rich.print("\n[green][bold]✔[/bold] Command Finished[/green]\n")
+                title = "[green][bold]✔[/bold] Command Finished[/green]"
             else:
-                text = out if out else ""
-                text += (("\n---\n" if out else "") + err + "\n") if err else ""
-                rich.print()
                 if proc_result.returncode != 0:
-                    title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"
+                    title = f"[red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/red]"
                 else:
                     title = "[green][bold]✔[/bold] Command Finished[/green]"
-                panel = Panel.fit(text, title=title, title_align="left", style="dim")
-                rich.print(panel)
-                rich.print()
+            cmd_result_panel(title, out, err)
 
         result = {
             "stdout": proc_result.stdout.decode("utf-8"),
@@ -247,7 +220,5 @@ class CLIPlugin(Plugin):
         """
         Exit the current shell session with an optional exit code.
         """
-        rich.print(
-            f"[bold magenta]EXIT[/bold magenta] [italic magenta]{exitcode}[/italic magenta]"
-        )
+        banner("EXIT", str(exitcode))
         sys.exit(exitcode)

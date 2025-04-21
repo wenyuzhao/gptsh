@@ -3,10 +3,11 @@ import sys
 from agentia import Agent
 from agentia.chat_completion import MessageStream
 from agentia.message import UserMessage
+from agentia.plugins import PluginInitError
 
 from autosh.config import CLI_OPTIONS, CONFIG
 from autosh.md import stream_md
-from .tools import CLIPlugin
+from .plugins import create_plugins
 import rich
 import platform
 
@@ -36,8 +37,17 @@ class Session:
             model=CONFIG.model if not CLI_OPTIONS.think else CONFIG.think_model,
             api_key=CONFIG.api_key,
             instructions=INSTRUCTIONS,
-            tools=[CLIPlugin()],
+            tools=create_plugins(),
         )
+
+    async def init(self):
+        try:
+            await self.agent.init()
+        except PluginInitError as e:
+            rich.print(
+                f"[bold red]Error:[/bold red] [red]Plugin [bold italic]{e.plugin}[/bold italic] failed to initialize: {str(e.original)}[/red]"
+            )
+            sys.exit(1)
 
     def _exit_with_error(self, msg: str):
         rich.print(f"[bold red]Error:[/bold red] [red]{msg}")
@@ -109,7 +119,8 @@ class Session:
             )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
-            await self.__render_streamed_markdown(stream)
+            if await self.__render_streamed_markdown(stream):
+                print()
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -137,7 +148,8 @@ class Session:
                     continue
                 completion = self.agent.chat_completion(prompt, stream=True)
                 async for stream in completion:
-                    await self.__render_streamed_markdown(stream)
+                    if await self.__render_streamed_markdown(stream):
+                        print()
             except KeyboardInterrupt:
                 break
 
@@ -151,7 +163,7 @@ class Session:
                     buf += await anext(chunks)
                 except StopAsyncIteration:
                     if len(buf) == 0:
-                        return
+                        return False
                     break
 
             content = {"v": ""}
@@ -170,6 +182,12 @@ class Session:
                         break
 
             await stream_md(gen())
+            return True
         else:
+            has_content = False
             async for chunk in stream:
+                if chunk == "":
+                    continue
+                has_content = True
                 print(chunk, end="", flush=True)
+            return has_content

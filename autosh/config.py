@@ -6,6 +6,26 @@ import tomllib
 USER_CONFIG_PATH = Path.home() / ".config" / "autosh" / "config.toml"
 
 
+class EmptyConfig(BaseModel): ...
+
+
+class SearchConfig(BaseModel):
+    tavily_api_key: str = Field(..., description="Tavily API key.")
+
+
+class WebConfig(BaseModel):
+    tavily_api_key: str = Field(..., description="Tavily API key.")
+
+
+class Plugins(BaseModel):
+    calc: EmptyConfig | None = None
+    cli: EmptyConfig | None = None
+    clock: EmptyConfig | None = None
+    code: EmptyConfig | None = None
+    search: SearchConfig | None = None
+    web: WebConfig | None = None
+
+
 class Config(BaseModel):
     model: str = Field(default="openai/gpt-4.1", description="The LLM model to use")
     think_model: str = Field(
@@ -14,10 +34,18 @@ class Config(BaseModel):
     )
     api_key: str | None = Field(default=None, description="OpenRouter API key.")
 
+    plugins: Plugins = Field(
+        default_factory=Plugins,
+        description="Plugin configuration. Set to null to disable the plugin.",
+    )
+
     @staticmethod
     def load() -> "Config":
         if USER_CONFIG_PATH.is_file():
-            config = Config(**tomllib.loads(USER_CONFIG_PATH.read_text()))
+            doc = tomllib.loads(USER_CONFIG_PATH.read_text())
+            main = doc.get("autosh", {})
+            plugins = Plugins(**doc.get("plugins", {}))
+            config = Config.model_validate({**main, "plugins": plugins})
         else:
             config = Config()
         return config
