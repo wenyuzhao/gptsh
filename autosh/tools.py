@@ -44,6 +44,8 @@ class CLIPlugin(Plugin):
         color: Annotated[Color | None, "The color of the text"] = None,
         bold: Annotated[bool, "Whether to print the text in bold"] = False,
         italic: Annotated[bool, "Whether to print the text in italic"] = False,
+        stderr: Annotated[bool, "Whether to print the text to stderr"] = False,
+        end: Annotated[str, "The text to print at the end"] = "\n",
     ):
         """
         Print an important message to the terminal. NOTE: Important message ONLY! Don't use it when you want to say something to the user.
@@ -54,7 +56,7 @@ class CLIPlugin(Plugin):
             text = f"[bold]{text}[/bold]"
         if italic:
             text = f"[italic]{text}[/italic]"
-        rich.print(text)
+        rich.print(text, file=sys.stderr if stderr else sys.stdout, end=end)
         return "DONE. You can continue and no need to repeat the text"
 
     @tool
@@ -69,6 +71,20 @@ class CLIPlugin(Plugin):
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path `{path}` does not exist.")
         os.chdir(path)
+
+    @tool
+    def get_argv(self):
+        """
+        Get the command line arguments.
+        """
+        if not CLI_OPTIONS.quiet:
+            rich.print(f"[bold magenta]GET ARGV[/bold magenta]")
+        if not CLI_OPTIONS.script:
+            return CLI_OPTIONS.args
+        return {
+            "script": CLI_OPTIONS.script,
+            "args": CLI_OPTIONS.args,
+        }
 
     @tool
     def read(
@@ -89,6 +105,31 @@ class CLIPlugin(Plugin):
         with open(path, "r") as f:
             content = f.read()
         return content
+
+    @tool
+    def stdin_readline(
+        self,
+        prompt: Annotated[
+            str | None, "The optional prompt to display before reading from stdin"
+        ] = None,
+    ):
+        """
+        Read a line from stdin.
+        """
+        if not sys.stdin.isatty():
+            raise RuntimeError("stdin is not a terminal.")
+        return input(prompt)
+
+    @tool
+    def stdin_readall(self):
+        """
+        Read all from stdin until EOF.
+        """
+        if sys.stdin.isatty():
+            raise RuntimeError("No piped input. stdin is a terminal.")
+        if CLI_OPTIONS.stdin_is_script:
+            raise RuntimeError("No piped input from stdin")
+        return sys.stdin.read()
 
     @tool
     def exec(
@@ -149,11 +190,11 @@ class CLIPlugin(Plugin):
 
         # Print the result
         if not CLI_OPTIONS.quiet:
-            text = f"[bold]➜ {command}[/bold]\n\n"
+            text = f"[bold]➜ {command}[/bold]"
             out = proc_result.stdout.decode("utf-8").strip()
             err = proc_result.stderr.decode("utf-8").strip()
-            text += out if out else ""
-            text += (("\n---\n" if out else "") + err + "\n") if err else ""
+            text += ("\n\n" + out) if out else ""
+            text += (("\n---\n" if out else "\n\n") + err + "\n") if err else ""
             rich.print()
             if proc_result.returncode != 0:
                 title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"

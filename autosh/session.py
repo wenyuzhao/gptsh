@@ -1,8 +1,10 @@
+from pathlib import Path
 import sys
 from agentia import Agent
 from agentia.chat_completion import MessageStream
+from agentia.message import UserMessage
 
-from autosh.config import CONFIG
+from autosh.config import CLI_OPTIONS, CONFIG
 from autosh.md import stream_md
 from .tools import CLIPlugin
 import rich
@@ -32,10 +34,54 @@ class Session:
             tools=[CLIPlugin()],
         )
 
-    async def exec_one(self, prompt: str):
+    def exit_with_error(self, msg: str):
+        rich.print(f"[bold red]Error:[/bold red] [red]{msg}")
+        sys.exit(1)
+
+    async def exec_prompt(self, prompt: str):
+        # Clean up the prompt
+        if prompt is not None:
+            prompt = prompt.strip()
+            if not prompt:
+                sys.exit(0)
+        # skip shebang line
+        if prompt.startswith("#!"):
+            prompt = prompt.split("\n", 1)[1]
+        # Execute the prompt
+        CLI_OPTIONS.prompt = prompt
+        if CLI_OPTIONS.args:
+            args = str(CLI_OPTIONS.args)
+            self.agent.history.add(
+                UserMessage(
+                    content="COMMAND LINE ARGS: " + args,
+                    role="user",
+                )
+            )
+        if CLI_OPTIONS.stdin_has_data():
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: The user is using piped stdin to feed additional data to you. Please use tools to read when necessary.",
+                    role="user",
+                )
+            )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
             await self.__render_streamed_markdown(stream)
+
+    async def exec_from_stdin(self):
+        if sys.stdin.isatty():
+            self.exit_with_error("No prompt is piped to stdin.")
+        prompt = sys.stdin.read()
+        if not prompt:
+            sys.exit(0)
+        CLI_OPTIONS.stdin_is_script = True
+        await self.exec_prompt(prompt)
+
+    async def exec_script(self, script: Path):
+        CLI_OPTIONS.script = script
+        with open(script, "r") as f:
+            prompt = f.read()
+        await self.exec_prompt(prompt)
 
     async def run_repl(self):
         console = rich.console.Console()

@@ -24,20 +24,25 @@ app = typer.Typer(
 
 
 async def start_session(prompt: str | None, args: list[str]):
+    CLI_OPTIONS.args = args
     session = Session()
-    if prompt and sys.stdin.isatty():
+    piped_stdin = not sys.stdin.isatty()
+    if piped_stdin and not CLI_OPTIONS.yes:
+        rich.print(
+            "[bold red]Error:[/bold red] [red]--yes is required when using piped stdin.[/red]"
+        )
+        sys.exit(1)
+    if prompt:
         # No piped stdin, just run the prompt
         if Path(prompt).is_file():
-            # If the prompt is a file, read it and execute it
-            with open(prompt, "r") as f:
-                prompt = f.read()
-        await session.exec_one(prompt)
-    elif prompt and not sys.stdin.isatty():
-        # Piped stdin with a prompt. Execute the prompt with the piped stdin as input data.
-        raise NotImplementedError("Not implemented")
+            # Prompt is a file, read it and execute it
+            await session.exec_script(Path(prompt))
+        else:
+            # Prompt is a string, execute it directly
+            await session.exec_prompt(prompt)
     elif not prompt and not sys.stdin.isatty():
         # Piped stdin without prompt, treat piped stdin as a prompt.
-        raise NotImplementedError("Not implemented")
+        await session.exec_from_stdin()
     else:
         await session.run_repl()
 

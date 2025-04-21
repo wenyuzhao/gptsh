@@ -1,3 +1,4 @@
+import sys
 from pydantic import BaseModel, Field
 from pathlib import Path
 import tomllib
@@ -24,6 +25,21 @@ CONFIG = Config.load()
 class CLIOptions(BaseModel):
     yes: bool = False
     quiet: bool = False
+
+    prompt: str | None = None
+    """The prompt to execute"""
+
+    script: Path | None = None
+    """The scripe providing the prompt"""
+
+    stdin_is_script: bool = False
+    """STDIN is a script, not a piped input."""
+
+    args: list[str] = Field(default_factory=list, description="Command line arguments")
+
+    def stdin_has_data(self) -> bool:
+        """Check if stdin has data."""
+        return not sys.stdin.isatty() and not CLI_OPTIONS.stdin_is_script
 
 
 CLI_OPTIONS = CLIOptions()

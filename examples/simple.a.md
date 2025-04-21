@@ -1,8 +1,10 @@
+#!/usr/bin/env ash
+
 # This is a simple file manipulating script
 
 First, please display a welcome message:)
 
-List all the files with size under current dir.
+Create a file called _x.log
 
-From the previous output, which file has the largest size?
+Write your feelings in this file.
 
