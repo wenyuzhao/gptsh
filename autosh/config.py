@@ -6,14 +6,8 @@ USER_CONFIG_PATH = Path.home() / ".config" / "autosh" / "config.toml"
 
 
 class Config(BaseModel):
-    yes: bool = Field(
-        default=False,
-        description="Automatically answer yes to all prompts.",
-    )
-    quiet: bool = Field(
-        default=False,
-        description="Suppress all output.",
-    )
+    model: str = Field(default="openai/gpt-4.1", description="The LLM model to use")
+    api_key: str | None = Field(default=None, description="OpenRouter API key.")
 
     @staticmethod
     def load() -> "Config":
@@ -25,3 +19,11 @@ class Config(BaseModel):
 
 
 CONFIG = Config.load()
+
+
+class CLIOptions(BaseModel):
+    yes: bool = False
+    quiet: bool = False
+
+
+CLI_OPTIONS = CLIOptions()

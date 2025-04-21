@@ -6,13 +6,56 @@ import rich
 import subprocess
 from rich.prompt import Confirm
 from rich.panel import Panel
-from rich.live import Live
+from enum import StrEnum
 
-from autosh.config import CONFIG
+from autosh.config import CLI_OPTIONS
+
+
+class Color(StrEnum):
+    black = "black"
+    red = "red"
+    green = "green"
+    yellow = "yellow"
+    blue = "blue"
+    magenta = "magenta"
+    cyan = "cyan"
+    white = "white"
+    bright_black = "bright_black"
+    bright_red = "bright_red"
+    bright_green = "bright_green"
+    bright_yellow = "bright_yellow"
+    bright_blue = "bright_blue"
+    bright_magenta = "bright_magenta"
+    bright_cyan = "bright_cyan"
+    bright_white = "bright_white"
+    dim = "dim"
 
 
 class CLIPlugin(Plugin):
     EXIT_CODE = 0
+
+    @tool
+    def print(
+        self,
+        text: Annotated[
+            str,
+            "The text to print. Can be markdown or using python-rich's markup syntax.",
+        ],
+        color: Annotated[Color | None, "The color of the text"] = None,
+        bold: Annotated[bool, "Whether to print the text in bold"] = False,
+        italic: Annotated[bool, "Whether to print the text in italic"] = False,
+    ):
+        """
+        Print an important message to the terminal. NOTE: Don't use it when you want to say something to the user.
+        """
+        if color:
+            text = f"[{color}]{text}[/{color}]"
+        if bold:
+            text = f"[bold]{text}[/bold]"
+        if italic:
+            text = f"[italic]{text}[/italic]"
+        rich.print(text)
+        return "DONE. You can continue and no need to repeat the text"
 
     @tool
     def chdir(self, path: Annotated[str, "The path to the new working directory"]):
@@ -47,10 +90,12 @@ class CLIPlugin(Plugin):
         # rich.print(f"[dim]{explanation}[/dim]")
 
         def confirm():
-            if CONFIG.yes:
+            if CLI_OPTIONS.yes:
                 return True
+            if not CLI_OPTIONS.quiet:
+                rich.print()
             return Confirm.ask(
-                "\n[magenta]Execute this command?[/magenta]",
+                "[magenta]Execute this command?[/magenta]",
                 default=True,
                 case_sensitive=False,
             )
@@ -62,11 +107,17 @@ class CLIPlugin(Plugin):
         decline_error = {"error": "The user declined to execute the command."}
 
         # Print the command and explanation
-        text = f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]\n\n[dim]{explanation}[/dim]"
-        panel = Panel.fit(
-            text, title=f"[magenta]Run Command[/magenta]", title_align="left"
-        )
-        rich.print(panel)
+        if CLI_OPTIONS.quiet and not CLI_OPTIONS.yes:
+            text = f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]"
+            rich.print(text)
+        elif CLI_OPTIONS.quiet:
+            pass
+        else:
+            text = f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]\n\n[dim]{explanation}[/dim]"
+            panel = Panel.fit(
+                text, title=f"[magenta]Run Command[/magenta]", title_align="left"
+            )
+            rich.print(panel)
 
         # Ask for confirmation
         if not confirm():
@@ -76,19 +127,20 @@ class CLIPlugin(Plugin):
         proc_result = run()
 
         # Print the result
-        text = f"[bold]➜ {command}[/bold]\n\n"
-        out = proc_result.stdout.decode("utf-8").strip()
-        err = proc_result.stderr.decode("utf-8").strip()
-        text += out if out else ""
-        text += (("\n---\n" if out else "") + err + "\n") if err else ""
-        rich.print()
-        if proc_result.returncode != 0:
-            title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"
-        else:
-            title = "[green][bold]✔[/bold] Command Finished[/green]"
-        panel = Panel.fit(text, title=title, title_align="left", style="dim")
-        rich.print(panel)
-        rich.print()
+        if not CLI_OPTIONS.quiet:
+            text = f"[bold]➜ {command}[/bold]\n\n"
+            out = proc_result.stdout.decode("utf-8").strip()
+            err = proc_result.stderr.decode("utf-8").strip()
+            text += out if out else ""
+            text += (("\n---\n" if out else "") + err + "\n") if err else ""
+            rich.print()
+            if proc_result.returncode != 0:
+                title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"
+            else:
+                title = "[green][bold]✔[/bold] Command Finished[/green]"
+            panel = Panel.fit(text, title=title, title_align="left", style="dim")
+            rich.print(panel)
+            rich.print()
 
         result = {
             "stdout": proc_result.stdout.decode("utf-8"),
