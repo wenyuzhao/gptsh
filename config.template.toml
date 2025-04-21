@@ -1,6 +1,13 @@
-# gptsh configuration file
+# autosh configuration file
+[autosh]
+api_key = "sk-or-v1-..."
+model = "openai/gpt-4.1"
+think_model = "openai/o4-mini-high"
 
-# OpenAI API Key and configurations
-[openai]
-api-key = "sk-..."
-model = "gpt-3.5-turbo"
+[plugins]
+calc = {}
+cli = {}
+clock = {}
+code = {}
+search = { tavily_api_key = "tvly-dev-..." }
+web = { tavily_api_key = "tvly-dev-..." }
