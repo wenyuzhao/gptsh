@@ -83,6 +83,48 @@ class CLIPlugin(Plugin):
         }
 
     @tool
+    def get_env(self, key: Annotated[str, "The environment variable to get"]):
+        """
+        Get an environment variable.
+        """
+        banner("GET ENV", key)
+        if key not in os.environ:
+            raise KeyError(f"Environment variable `{key}` does not exist.")
+        return os.environ[key]
+
+    @tool
+    def get_all_envs(self):
+        """
+        Get all environment variables.
+        """
+        banner("GET ALL ENVS")
+        envs = {}
+        for key, value in os.environ.items():
+            envs[key] = value
+        return {"envs": envs}
+
+    @tool
+    def update_env(
+        self,
+        key: Annotated[str, "The environment variable to set"],
+        value: Annotated[
+            str | None,
+            "The value to set the environment variable to, or None to delete it",
+        ],
+    ):
+        """
+        Set or delete an environment variable.
+        """
+        if value is None:
+            banner("DEL ENV", key)
+            if key in os.environ:
+                del os.environ[key]
+        else:
+            banner("SET ENV", key, value)
+            os.environ[key] = value
+        return f"DONE"
+
+    @tool
     def read(
         self,
         path: Annotated[str, "The path to the file to read"],
