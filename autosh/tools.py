@@ -190,19 +190,21 @@ class CLIPlugin(Plugin):
 
         # Print the result
         if not CLI_OPTIONS.quiet:
-            text = f"[bold]➜ {command}[/bold]"
             out = proc_result.stdout.decode("utf-8").strip()
             err = proc_result.stderr.decode("utf-8").strip()
-            text += ("\n\n" + out) if out else ""
-            text += (("\n---\n" if out else "\n\n") + err + "\n") if err else ""
-            rich.print()
-            if proc_result.returncode != 0:
-                title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"
+            if not out and not err:
+                rich.print("\n[green][bold]✔[/bold] Command Finished[/green]\n")
             else:
-                title = "[green][bold]✔[/bold] Command Finished[/green]"
-            panel = Panel.fit(text, title=title, title_align="left", style="dim")
-            rich.print(panel)
-            rich.print()
+                text = out if out else ""
+                text += (("\n---\n" if out else "") + err + "\n") if err else ""
+                rich.print()
+                if proc_result.returncode != 0:
+                    title = f"[bold red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/bold red]"
+                else:
+                    title = "[green][bold]✔[/bold] Command Finished[/green]"
+                panel = Panel.fit(text, title=title, title_align="left", style="dim")
+                rich.print(panel)
+                rich.print()
 
         result = {
             "stdout": proc_result.stdout.decode("utf-8"),

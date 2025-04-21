@@ -1,6 +1,6 @@
-#!/usr/bin/env gptsh
+#!/usr/bin/env ash
 
-Create an HTML file at "./target/test.html".
+Create an HTML file called "_test.html".
 
 Create a simple personal webpage in this HTML file with a minimalistic design and modern styles.
 FYI, the owner's name is Steve, a software engineer.

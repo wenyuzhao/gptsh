@@ -9,9 +9,10 @@ from autosh.config import CLI_OPTIONS, CONFIG
 from autosh.md import stream_md
 from .tools import CLIPlugin
 import rich
+import platform
 
 
-INSTRUCTIONS = """
+INSTRUCTIONS = f"""
 You are now acting as a AI-powered terminal shell, operating on the user's real computer.
 
 The user will send you questions, prompts, or descriptions of the tasks.
@@ -23,6 +24,8 @@ The system command output are displayed to the user directly, so don't repeat th
 Just respond with the text if you want to simply print something to the terminal, no need to use `echo` or `print`.
 
 You may use markdown to format your responses.
+
+YOUR HOST OS INFO: {platform.platform()}
 """
 
 
@@ -41,7 +44,7 @@ class Session:
 
     async def _print_help_and_exit(self, prompt: str):
         agent = Agent(
-            model=CONFIG.model,
+            model="openai/gpt-4o-mini",
             api_key=CONFIG.api_key,
             instructions=f"""
             This is a CLI program logic written in natural language.
