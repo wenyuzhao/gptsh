@@ -62,12 +62,33 @@ class CLIPlugin(Plugin):
         """
         Changes the current working directory of the terminal to another directory.
         """
-        rich.print(
-            f"[bold magenta]CWD[/bold magenta] [italic magenta]{path}[/italic magenta]"
-        )
+        if not CLI_OPTIONS.quiet:
+            rich.print(
+                f"[bold magenta]CWD[/bold magenta] [italic magenta]{path}[/italic magenta]"
+            )
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path `{path}` does not exist.")
         os.chdir(path)
+
+    @tool
+    def read(
+        self,
+        path: Annotated[str, "The path to the file to read"],
+    ):
+        """
+        Read a file and print its content.
+        """
+        if not CLI_OPTIONS.quiet:
+            rich.print(
+                f"[bold magenta]READ[/bold magenta] [italic magenta]{path}[/italic magenta]"
+            )
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"File `{path}` does not exist.")
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"Path `{path}` is not a file.")
+        with open(path, "r") as f:
+            content = f.read()
+        return content
 
     @tool
     def exec(

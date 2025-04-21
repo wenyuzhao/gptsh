@@ -131,11 +131,11 @@ def main():
             CONFIG.api_key = key
         else:
             rich.print(
-                "[bold red]Error:[/bold red] No API key found. Please set the OPENROUTER_API_KEY environment variable or add it to your config file."
+                "[bold red]Error:[/bold red] [red]No API key found. Please set the OPENROUTER_API_KEY environment variable or add it to your config file.[/red]"
             )
             sys.exit(1)
     try:
         asyncio.run(start_session(prompt, args))
     except (KeyboardInterrupt, EOFError):
-        rich.print("\n[bold red]Aborted.[/bold red]")
+        rich.print("\n[red]Aborted.[/red]")
         sys.exit(1)
