@@ -90,7 +90,7 @@ class Session:
         else:
             cmd = CLI_OPTIONS.script.name
         return UserMessage(
-            content=f"PROGRAM NAME: {cmd}\n\nCOMMAND LINE ARGS: {args}",
+            content=f"PROGRAM NAME: {cmd}\n\nCOMMAND LINE ARGS: {args}\n\nCWD: {str(Path.cwd())}",
             role="user",
         )
 
