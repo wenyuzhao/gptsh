@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field
 from pathlib import Path
 import tomllib
 
+import rich
+
 USER_CONFIG_PATH = Path.home() / ".config" / "autosh" / "config.toml"
 
 
@@ -42,10 +44,14 @@ class Config(BaseModel):
     @staticmethod
     def load() -> "Config":
         if USER_CONFIG_PATH.is_file():
-            doc = tomllib.loads(USER_CONFIG_PATH.read_text())
-            main = doc.get("autosh", {})
-            plugins = Plugins(**doc.get("plugins", {}))
-            config = Config.model_validate({**main, "plugins": plugins})
+            try:
+                doc = tomllib.loads(USER_CONFIG_PATH.read_text())
+                main = doc.get("autosh", {})
+                plugins = Plugins(**doc.get("plugins", {}))
+                config = Config.model_validate({**main, "plugins": plugins})
+            except tomllib.TOMLDecodeError as e:
+                rich.print(f"[bold red]Error:[/bold red] invalid config file: {e}")
+                sys.exit(1)
         else:
             config = Config()
         return config
