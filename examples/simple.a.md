@@ -4,7 +4,4 @@
 
 First, please display a welcome message:)
 
-Create a file called _x.log
-
-Write your feelings in this file.
-
+Write "Hello, world" to _x.log
