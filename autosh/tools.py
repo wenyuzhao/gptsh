@@ -46,7 +46,7 @@ class CLIPlugin(Plugin):
         italic: Annotated[bool, "Whether to print the text in italic"] = False,
     ):
         """
-        Print an important message to the terminal. NOTE: Don't use it when you want to say something to the user.
+        Print an important message to the terminal. NOTE: Important message ONLY! Don't use it when you want to say something to the user.
         """
         if color:
             text = f"[{color}]{text}[/{color}]"
