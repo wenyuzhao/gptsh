@@ -29,8 +29,8 @@ def confirm(message: str):
 
 
 def cmd_preview_panel(title: str, content: RenderableType, short: str | None = None):
-    if CLI_OPTIONS.quiet and not CLI_OPTIONS.yes:
-        if short:
+    if CLI_OPTIONS.quiet:
+        if short and not CLI_OPTIONS.yes:
             rich.print(f"[magenta]{short}[/magenta]\n")
         return
     panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
