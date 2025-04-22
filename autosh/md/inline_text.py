@@ -1,0 +1,206 @@
+from dataclasses import dataclass, field
+from autosh.md.md import State, StreamedMarkdownPrinter
+
+
+@dataclass
+class Keyword:
+    token: str
+
+    def is_bold(self) -> bool:
+        return self.token[0] in ["*", "_"] and len(self.token) == 2
+
+    def is_italic(self) -> bool:
+        return self.token[0] in ["*", "_"] and len(self.token) == 1
+
+    def is_bold_and_italic(self) -> bool:
+        return self.token[0] in ["*", "_"] and len(self.token) > 2
+
+    def is_bold_or_italic(self) -> bool:
+        return self.token[0] in ["*", "_"]
+
+
+class InvalidState(Exception):
+    def __init__(self, token: str):
+        super().__init__(token)
+        self.token = token
+
+
+@dataclass
+class InlineScope:
+    state: State
+
+    stack: list[tuple[Keyword, State]] = field(default_factory=list)
+
+    @property
+    def last(self) -> str | None:
+        return self.stack[-1][0].token if len(self.stack) > 0 else None
+
+    @property
+    def strike(self) -> bool:
+        return self.last == "~~"
+
+    @property
+    def code(self) -> bool:
+        return self.last == "`"
+
+    def enter(self, kind: Keyword):
+        match kind:
+            case "`":
+                state = self.state._enter_scope(dim=True)
+            case "~~":
+                state = self.state._enter_scope(strike=True)
+            case _ if kind.is_bold():
+                state = self.state._enter_scope(bold=True)
+            case _ if kind.is_italic():
+                state = self.state._enter_scope(italic=True)
+            case _ if kind.is_bold_and_italic():
+                state = self.state._enter_scope(bold=True, italic=True)
+            case _:
+                state = self.state._enter_scope()
+        self.stack.append((kind, state))
+
+    def exit(self):
+        t = self.stack.pop()
+        state = t[1]
+        self.state._exit_scope(state)
+
+
+class InlineTextPrinter:
+    def __init__(self, p: StreamedMarkdownPrinter):
+        self.p = p
+
+    def emit(self, s: str):
+        self.p.emit(s)
+
+    def peek(self):
+        return self.p.peek()
+
+    async def consume(self, n: int = 1):
+        return await self.p.consume(n)
+
+    async def check(self, s: str, eof: bool | None = None) -> bool:
+        return await self.p.check(s, eof)
+
+    async def parse_inline_code(self):
+        self.emit("`")
+        # Parse until another "`" or a newline, or EOF
+        while not await self.check("`"):
+            c = await self.p.consume()
+            if c is None or c == "\n":
+                return
+            self.emit(c)
+            if c == "\\":
+                c = await self.p.consume()
+                if c is None or c == "\n":
+                    return
+                self.emit(c)
+        self.emit("`")
+        await self.p.consume()
+
+    async def get_next_token(self) -> str | Keyword | None:
+        c = self.peek()
+        if c is None or c == "\n":
+            return None
+        if c == "`":
+            await self.consume()
+            return Keyword("`")
+        if c == "*":
+            s = ""
+            while self.peek() == "*":
+                s += c
+                await self.consume()
+            return Keyword(s)
+        if c == "_":
+            s = ""
+            while self.peek() == "_":
+                s += c
+                await self.consume()
+            return Keyword(s)
+        if c == "~" and await self.check("~~"):
+            s = ""
+            while self.peek() == "~":
+                s += c
+                await self.consume()
+            return Keyword(s)
+        if c == " " or c == "\t":
+            s = ""
+            while self.peek() == " " or self.peek() == "\t":
+                s += c
+                await self.consume()
+            return s
+        s = ""
+        while c is not None and c != "\n" and c not in ["`", "*", "_", "~", " "]:
+            s += c
+            await self.consume()
+            c = self.peek()
+            if c == "\\":
+                await self.consume()
+                s += c
+                c = self.peek()
+                if c is None or c == "\n":
+                    return None if len(s) == 0 else s
+                s += c
+                await self.consume()
+        if len(s) == 0:
+            return None
+        return s
+
+    async def parse_inline(self, consume_trailing_newline: bool = True):
+        last_is_space = False
+        start = True
+        scope = InlineScope(self.p.state)
+
+        while True:
+            t = await self.get_next_token()
+            curr_is_space = False
+
+            if t is None:
+                if consume_trailing_newline:
+                    await self.consume()
+                    self.emit("\n")
+                return
+            elif isinstance(t, str):
+                # Space or normal text
+                if t[0] == " ":
+                    curr_is_space = True
+                    self.emit(" ")
+                else:
+                    self.emit(t)
+            elif t.token == "`":
+                # Inline code
+                scope.enter(t)
+                with self.p.state.style(dim=True):
+                    await self.parse_inline_code()
+                scope.exit()
+            elif t.token == "~~":
+                # Strike through
+                if not scope.strike:
+                    scope.enter(t)
+                    self.emit("~~")
+                else:
+                    self.emit("~~")
+                    scope.exit()
+            elif (
+                t.is_bold_or_italic()
+                and (last_is_space or start)
+                and scope.last != t.token
+            ):
+                # Start bold or italics
+                scope.enter(t)
+                self.emit(t.token)
+            elif (
+                t.is_bold_or_italic()
+                and self.peek() in [" ", "\t", "\n", None]
+                and scope.last == t.token
+            ):
+                # End bold or italics
+                self.emit(t.token)
+                scope.exit()
+            else:
+                # print(
+                #     "Invalid token:", t.token, f"[{self.peek()}]", scope.last == t.token
+                # )
+                raise InvalidState(t.token)
+
+            last_is_space = curr_is_space
+            start = False
