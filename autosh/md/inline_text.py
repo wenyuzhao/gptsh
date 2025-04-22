@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from autosh.md.md import State, StreamedMarkdownPrinter
+from autosh.md.printer import StreamedMarkdownPrinter
+from autosh.md.state import State
 
 
 @dataclass
@@ -66,8 +67,11 @@ class InlineScope:
 
 
 class InlineTextPrinter:
-    def __init__(self, p: StreamedMarkdownPrinter):
+    def __init__(self, p: StreamedMarkdownPrinter, table: bool = False):
         self.p = p
+        self.terminator = ["\n", None]
+        if table:
+            self.terminator.append("|")
 
     def emit(self, s: str):
         self.p.emit(s)
@@ -86,12 +90,12 @@ class InlineTextPrinter:
         # Parse until another "`" or a newline, or EOF
         while not await self.check("`"):
             c = await self.p.consume()
-            if c is None or c == "\n":
+            if c in self.terminator:
                 return
             self.emit(c)
             if c == "\\":
                 c = await self.p.consume()
-                if c is None or c == "\n":
+                if c in self.terminator:
                     return
                 self.emit(c)
         self.emit("`")
@@ -99,7 +103,7 @@ class InlineTextPrinter:
 
     async def get_next_token(self) -> str | Keyword | None:
         c = self.peek()
-        if c is None or c == "\n":
+        if c in self.terminator:
             return None
         if c == "`":
             await self.consume()
@@ -129,17 +133,17 @@ class InlineTextPrinter:
                 await self.consume()
             return s
         s = ""
-        while c is not None and c != "\n" and c not in ["`", "*", "_", "~", " "]:
-            s += c
+        while c not in self.terminator and c not in ["`", "*", "_", "~", " "]:
+            s += c or ""
             await self.consume()
             c = self.peek()
             if c == "\\":
                 await self.consume()
                 s += c
                 c = self.peek()
-                if c is None or c == "\n":
+                if c in self.terminator:
                     return None if len(s) == 0 else s
-                s += c
+                s += c or ""
                 await self.consume()
         if len(s) == 0:
             return None
@@ -156,7 +160,8 @@ class InlineTextPrinter:
 
             if t is None:
                 if consume_trailing_newline:
-                    await self.consume()
+                    if self.peek() == "\n":
+                        await self.consume()
                     self.emit("\n")
                 return
             elif isinstance(t, str):
@@ -190,7 +195,7 @@ class InlineTextPrinter:
                 self.emit(t.token)
             elif (
                 t.is_bold_or_italic()
-                and self.peek() in [" ", "\t", "\n", None]
+                and self.peek() in [" ", "\t", *self.terminator]
                 and scope.last == t.token
             ):
                 # End bold or italics
