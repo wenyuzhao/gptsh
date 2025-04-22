@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 import sys
 from agentia import Agent
@@ -108,6 +109,7 @@ class Session:
         ):
             await self._print_help_and_exit(prompt)
         # Execute the prompt
+        loading = self.__create_loading_indicator()
         CLI_OPTIONS.prompt = prompt
         self.agent.history.add(self._get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
@@ -119,7 +121,7 @@ class Session:
             )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
-            if await self.__render_streamed_markdown(stream):
+            if await self.__render_streamed_markdown(stream, loading=loading):
                 print()
 
     async def exec_from_stdin(self):
@@ -146,14 +148,46 @@ class Session:
                     break
                 if len(prompt) == 0:
                     continue
+                loading = self.__create_loading_indicator()
                 completion = self.agent.chat_completion(prompt, stream=True)
                 async for stream in completion:
-                    if await self.__render_streamed_markdown(stream):
+                    if await self.__render_streamed_markdown(stream, loading=loading):
                         print()
             except KeyboardInterrupt:
                 break
 
-    async def __render_streamed_markdown(self, stream: MessageStream):
+    def __create_loading_indicator(self):
+        return asyncio.create_task(self.__loading()) if sys.stdout.isatty() else None
+
+    async def __loading(self):
+        chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+        char_width = 1
+        msg = "Loading..."
+        count = 0
+        print("\x1b[2m", end="", flush=True)
+        while True:
+            try:
+                print(chars[count], end="", flush=True)
+                print(" " + msg, end="", flush=True)
+                count += 1
+                await asyncio.sleep(0.1)
+                length = char_width + len(msg) + 1
+                print("\b" * length, end="", flush=True)
+                print(" " * length, end="", flush=True)
+                print("\b" * length, end="", flush=True)
+                if count == len(chars):
+                    count = 0
+            except asyncio.CancelledError:
+                length = char_width + len(msg) + 1
+                print("\b" * length, end="", flush=True)
+                print(" " * length, end="", flush=True)
+                print("\b" * length, end="", flush=True)
+                print("\x1b[0m", end="", flush=True)
+                break
+
+    async def __render_streamed_markdown(
+        self, stream: MessageStream, loading: asyncio.Task[None] | None = None
+    ):
         if sys.stdout.isatty():
             # buffer first few chars so we don't need to launch glow if there is no output
             chunks = aiter(stream)
@@ -165,6 +199,9 @@ class Session:
                     if len(buf) == 0:
                         return False
                     break
+            if loading:
+                loading.cancel()
+                await loading
 
             content = {"v": ""}
 
