@@ -142,6 +142,7 @@ class MarkdowmPrinter:
                 case "`":
                     await self.next()
                     if (i := find("code")) is not None:
+                        self.print(c)
                         if not outer_is_dim:
                             self.print("\x1b[22m")
                             if find("bold") is not None or outer_is_bold:
@@ -150,6 +151,7 @@ class MarkdowmPrinter:
                     else:
                         self.print("\x1b[2m")
                         styles.append("code")
+                        self.print(c)
                 # Bold
                 case "*" if (
                     not_code and await self.check("**") and not find_italic_first()
@@ -158,24 +160,32 @@ class MarkdowmPrinter:
                     await self.next()
                     # print(">", styles, find("bold"))
                     if (i := find("bold")) is not None:
+                        self.print(c)
+                        self.print(c)
                         if not outer_is_bold:
                             self.print("\x1b[22m")
                         styles = styles[:i]
                     else:
                         self.print("\x1b[1m")
                         styles.append("bold")
+                        self.print(c)
+                        self.print(c)
                 case "_" if (
                     not_code and await self.check("__") and not find_italic_first()
                 ):
                     await self.next()
                     await self.next()
                     if (i := find("bold")) is not None:
+                        self.print(c)
+                        self.print(c)
                         if not outer_is_bold:
                             self.print("\x1b[22m")
                         styles = styles[:i]
                     else:
                         self.print("\x1b[1m")
                         styles.append("bold")
+                        self.print(c)
+                        self.print(c)
                 # Italic
                 case "*" | "_" if (
                     not_code
@@ -184,6 +194,7 @@ class MarkdowmPrinter:
                 ):
                     await self.next()
                     if (i := find("italic")) is not None:
+                        self.print(c)
                         if not outer_is_italic:
                             self.print("\x1b[23m")
                         styles = styles[:i]
@@ -191,16 +202,19 @@ class MarkdowmPrinter:
                     else:
                         self.print("\x1b[3m")
                         styles.append("italic")
+                        self.print(c)
                 # Strike through
                 case "~" if not_code and await self.check("~~"):
                     await self.next()
                     await self.next()
                     if (i := find("strike")) is not None:
+                        self.print("~~")
                         self.print("\x1b[29m")
                         styles = styles[:i]
                     else:
                         self.print("\x1b[9m")
                         styles.append("strike")
+                        self.print("~~")
                 case _:
                     self.print(c)
                     await self.next()
