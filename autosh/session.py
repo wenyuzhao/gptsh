@@ -116,14 +116,14 @@ class Session:
         if CLI_OPTIONS.stdin_has_data():
             self.agent.history.add(
                 UserMessage(
-                    content="IMPORTANT: The user is using piped stdin to feed additional data to you. Please use tools to read when necessary.",
+                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Input data is fed to you through piped stdin. Please use tools to read when necessary.",
                     role="user",
                 )
             )
         if not sys.stdout.isatty():
             self.agent.history.add(
                 UserMessage(
-                    content="IMPORTANT: Your output will be redirected to a file.",
+                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Your output (which should only contain the user expected output, nothing else) will be automatically redirected to a file.",
                     role="user",
                 )
             )
