@@ -11,6 +11,7 @@ from autosh.md import stream_md
 from .plugins import create_plugins
 import rich
 import platform
+from rich.prompt import Prompt
 
 
 INSTRUCTIONS = f"""
@@ -121,8 +122,11 @@ class Session:
             )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
+            if not loading:
+                loading = self.__create_loading_indicator()
             if await self.__render_streamed_markdown(stream, loading=loading):
                 print()
+            loading = None
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -143,23 +147,30 @@ class Session:
         console = rich.console.Console()
         while True:
             try:
-                prompt = console.input("[bold]>[/bold] ").strip()
+                prompt = console.input("[bold blue]>[/bold blue] ").strip()
                 if prompt in ["exit", "quit"]:
                     break
                 if len(prompt) == 0:
                     continue
-                loading = self.__create_loading_indicator()
+                loading = self.__create_loading_indicator(newline=True)
                 completion = self.agent.chat_completion(prompt, stream=True)
                 async for stream in completion:
+                    if not loading:
+                        loading = self.__create_loading_indicator()
                     if await self.__render_streamed_markdown(stream, loading=loading):
                         print()
+                    loading = None
             except KeyboardInterrupt:
                 break
 
-    def __create_loading_indicator(self):
-        return asyncio.create_task(self.__loading()) if sys.stdout.isatty() else None
+    def __create_loading_indicator(self, newline: bool = False):
+        return (
+            asyncio.create_task(self.__loading(newline))
+            if sys.stdout.isatty()
+            else None
+        )
 
-    async def __loading(self):
+    async def __loading(self, newline: bool = False):
         chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
         char_width = 1
         msg = "Loading..."
@@ -183,6 +194,8 @@ class Session:
                 print(" " * length, end="", flush=True)
                 print("\b" * length, end="", flush=True)
                 print("\x1b[0m", end="", flush=True)
+                if newline:
+                    print()
                 break
 
     async def __render_streamed_markdown(
@@ -197,6 +210,9 @@ class Session:
                     buf += await anext(chunks)
                 except StopAsyncIteration:
                     if len(buf) == 0:
+                        if loading:
+                            loading.cancel()
+                            await loading
                         return False
                     break
             if loading:
