@@ -131,7 +131,7 @@ wheels = [
 
 [[package]]
 name = "autosh"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "agentia" },
@@ -961,15 +961,15 @@ wheels = [
 
 [[package]]
 name = "llama-index-llms-openai"
-version = "0.3.37"
+version = "0.3.38"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index-core" },
     { name = "openai" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/19/6b59ce0b5c7d917efcfaf2656555b9fba8eeaee34a24b1dc7b247a1e4848/llama_index_llms_openai-0.3.37.tar.gz", hash = "sha256:b7496a3a95899663af43dcb8e19f8718ec884e2d3d8ac60d2522a9a32efb9232", size = 22727 }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/bd/b0ceae2d5d697feb5d18a7402214cdad30bc20d8cbe1619e9e6355361ca5/llama_index_llms_openai-0.3.38.tar.gz", hash = "sha256:bcd1d5212bf7c948301958719a1df361be62b37b5620732e4c9ce804bc078b77", size = 22738 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/0a/135a7f1f49e86ed9228909cf812200bd7351c1b3925f23aff53bf5e21ccd/llama_index_llms_openai-0.3.37-py3-none-any.whl", hash = "sha256:46b2a65f5f7833091fcf618411b89ba6796c2a8546b09dfe979d3118000d7944", size = 23837 },
+    { url = "https://files.pythonhosted.org/packages/e4/e1/1c185e22ca1fd1ac813d225be046c4223dbe2fdf64d90a6e86608e6d17ad/llama_index_llms_openai-0.3.38-py3-none-any.whl", hash = "sha256:d724b809d5e81e15cd1c3def65f023c4c74f2a097e542e5c002793ffbaa33a96", size = 23839 },
 ]
 
 [[package]]
