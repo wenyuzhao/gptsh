@@ -85,6 +85,12 @@ class InlineTextPrinter:
     async def check(self, s: str, eof: bool | None = None) -> bool:
         return await self.p.check(s, eof)
 
+    async def parse_inline_unformatted(self):
+        # Parse until another "`" or a newline, or EOF
+        while not self.peek() in self.terminator:
+            c = await self.p.consume()
+            self.emit(c)
+
     async def parse_inline_code(self):
         self.emit("`")
         # Parse until another "`" or a newline, or EOF
