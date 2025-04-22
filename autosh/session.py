@@ -123,7 +123,7 @@ class Session:
         if not sys.stdout.isatty():
             self.agent.history.add(
                 UserMessage(
-                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Your output should only contain the user expected output, nothing else.",
+                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Your output should only contain the user expected output, nothing else. Don't ask user questions or print anything else since the user cannot see it.",
                     role="user",
                 )
             )
