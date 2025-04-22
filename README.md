@@ -57,6 +57,8 @@ Write "Hello, world" to _test.log
 
 # TODO
 
-- [ ] Image generation
-- [ ] Image input
+- [ ] Image input, generation, and editing
 - [ ] RAG for non-text files
+- [ ] Plugin system
+- [ ] MCP support
+- [ ] A better input widget with history and auto completion
