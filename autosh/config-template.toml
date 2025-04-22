@@ -1,0 +1,13 @@
+# autosh configuration file
+[autosh]
+api_key = "sk-or-v1-..."
+# model = "openai/gpt-4.1"
+# think_model = "openai/o4-mini-high"
+
+[plugins]
+calc = {}
+cli = {}
+clock = {}
+code = {}
+# search = { tavily_api_key = "tvly-dev-..." }
+# web = { tavily_api_key = "tvly-dev-..." }

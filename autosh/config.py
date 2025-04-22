@@ -43,6 +43,11 @@ class Config(BaseModel):
 
     @staticmethod
     def load() -> "Config":
+        if not USER_CONFIG_PATH.is_file():
+            # Copy config.template.toml to USER_CONFIG_PATH
+            USER_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            template = Path(__file__).parent / "config.template.toml"
+            USER_CONFIG_PATH.write_text(template.read_text())
         if USER_CONFIG_PATH.is_file():
             try:
                 doc = tomllib.loads(USER_CONFIG_PATH.read_text())

@@ -8,7 +8,7 @@ from rich.columns import Columns
 from rich.panel import Panel
 import argparse
 
-from autosh.config import CLI_OPTIONS, CONFIG
+from autosh.config import CLI_OPTIONS, CONFIG, USER_CONFIG_PATH
 from .session import Session
 import sys
 
@@ -149,14 +149,13 @@ def main():
     # dotenv.load_dotenv()
     prompt, args = parse_args()
 
+    if key := os.getenv("OPENROUTER_API_KEY"):
+        CONFIG.api_key = key
     if CONFIG.api_key is None:
-        if key := os.getenv("OPENROUTER_API_KEY"):
-            CONFIG.api_key = key
-        else:
-            rich.print(
-                "[bold red]Error:[/bold red] [red]No API key found. Please set the OPENROUTER_API_KEY environment variable or add it to your config file.[/red]"
-            )
-            sys.exit(1)
+        rich.print(
+            f"[bold red]Error:[/bold red] [red]OpenRouter API key not found.\nPlease set the OPENROUTER_API_KEY environment variable or add it to your config file: {USER_CONFIG_PATH}.[/red]"
+        )
+        sys.exit(1)
     try:
         asyncio.run(start_session(prompt, args))
     except (KeyboardInterrupt, EOFError):
