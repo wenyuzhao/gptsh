@@ -88,7 +88,7 @@ class Session:
     def _get_argv_message(self):
         args = str(CLI_OPTIONS.args)
         if not CLI_OPTIONS.script:
-            cmd = "PROMPT"
+            cmd = Path(sys.argv[0]).name
         else:
             cmd = CLI_OPTIONS.script.name
         return UserMessage(
