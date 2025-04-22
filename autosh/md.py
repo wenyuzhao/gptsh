@@ -6,7 +6,7 @@ HIGHLIGHT_COLOR_START = "35"
 HIGHLIGHT_COLOR_END = "0"
 
 
-class MarkdowmPrinter:
+class StreamedMarkdownPrinter:
     def __init__(self, stream: AsyncGenerator[str, None]):
         async def char_stream(stream: AsyncGenerator[str, None]):
             async for chunk in stream:
@@ -404,5 +404,5 @@ class MarkdowmPrinter:
 
 
 async def stream_md(stream: AsyncGenerator[str, None]):
-    mp = MarkdowmPrinter(stream)
+    mp = StreamedMarkdownPrinter(stream)
     await mp.parse_doc()
