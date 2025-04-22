@@ -138,19 +138,16 @@ class InlineTextPrinter:
                 s += c
                 await self.consume()
             return s
-        s = ""
-        while c not in self.terminator and c not in ["`", "*", "_", "~", " "]:
-            s += c or ""
+        s = c or ""
+        if c == "\\":
             await self.consume()
             c = self.peek()
-            if c == "\\":
-                await self.consume()
-                s += c
-                c = self.peek()
-                if c in self.terminator:
-                    return None if len(s) == 0 else s
-                s += c or ""
-                await self.consume()
+            if c in self.terminator:
+                return None if len(s) == 0 else s
+            s += c or ""
+            await self.consume()
+        else:
+            await self.consume()
         if len(s) == 0:
             return None
         return s
