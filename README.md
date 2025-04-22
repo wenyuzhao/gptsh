@@ -14,7 +14,9 @@ As an interactive shell: `ash` (alternatively, `autosh`)
 
 Execute a single prompt: `ash "list current directory"`
 
-Process piped data: `cat README.md | ash -y "summarise"`
+Process piped data:
+* `cat README.md | ash -y "summarise"`
+* `cat in.csv | ash -y -q "double the first numeric column" > out.csv`
 
 ## Scripting
 
