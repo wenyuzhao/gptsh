@@ -14,7 +14,7 @@ As an interactive shell: `ash` (alternatively, `autosh`)
 
 Execute a single prompt: `ash "list current directory"`
 
-Process piped data: `cat README.md | ash "summarise"`
+Process piped data: `cat README.md | ash -y "summarise"`
 
 ## Scripting
 

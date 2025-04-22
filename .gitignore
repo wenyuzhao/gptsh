@@ -16,3 +16,4 @@ wheels/
 
 # Other files
 /_*
+.DS_Store

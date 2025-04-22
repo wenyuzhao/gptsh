@@ -120,6 +120,13 @@ class Session:
                     role="user",
                 )
             )
+        if not sys.stdout.isatty():
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: Your output will be redirected to a file.",
+                    role="user",
+                )
+            )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
             if not loading:
