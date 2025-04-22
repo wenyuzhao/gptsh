@@ -630,8 +630,3 @@ class StreamedMarkdownPrinter:
 
     def __await__(self):
         return self.parse_doc().__await__()
-
-
-async def stream_md(stream: AsyncGenerator[str, None]):
-    mp = StreamedMarkdownPrinter(stream)
-    await mp.parse_doc()
