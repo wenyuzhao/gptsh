@@ -127,6 +127,13 @@ class Session:
                     role="user",
                 )
             )
+        else:
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: This is a one-off run, so don't ask user questions since the user cannot reply.",
+                    role="user",
+                )
+            )
         completion = self.agent.chat_completion(prompt, stream=True)
         async for stream in completion:
             if not loading:
