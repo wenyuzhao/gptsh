@@ -158,7 +158,6 @@ class Session:
         await self.exec_prompt(prompt)
 
     async def run_repl(self):
-        console = rich.console.Console()
         while True:
             try:
                 print("\x1b[1;36m> \x1b[0m", end="", flush=True)

@@ -1,22 +1,11 @@
-from contextlib import contextmanager
-import datetime
-import os
 from pathlib import Path
-import sys
-import termios
-import tty
-from curses.ascii import isprint
 from types import FrameType
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory, History, FileHistory
 
-
 import inspect
-from typing import Awaitable, Iterable, Literal, overload
-
-from autosh.neongrid.measure import text_display_width
-from autosh.neongrid.style import ESC
+from typing import Awaitable, Literal, overload
 
 
 class MyFileHistory(FileHistory):
@@ -48,6 +37,7 @@ class MyFileHistory(FileHistory):
 
 
 def get_frame(frame: FrameType):
+    # Adapted from: https://gist.github.com/lee-pai-long/d3004225e1847b84acb4fbba0c2aea91
     # module and packagename.
     module_info = inspect.getmodule(frame)
     if module_info:
