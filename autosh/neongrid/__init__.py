@@ -6,3 +6,4 @@ from . import stream
 
 from .style import set_style
 from .print import printmd as print
+from ._input import input

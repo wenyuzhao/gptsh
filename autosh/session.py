@@ -161,7 +161,9 @@ class Session:
         console = rich.console.Console()
         while True:
             try:
-                prompt = console.input("[bold blue]>[/bold blue] ").strip()
+                prompt = (
+                    await ng.input("> ", sync=False, persist="/tmp/autosh-history")
+                ).strip()
                 if prompt in ["exit", "quit"]:
                     break
                 if len(prompt) == 0:

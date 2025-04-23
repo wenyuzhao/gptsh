@@ -8,6 +8,7 @@ dependencies = [
     "agentia>=0.0.5",
     "asyncio>=3.4.3",
     "markdownify>=1.1.0",
+    "prompt-toolkit>=3.0.51",
     "pydantic>=2.11.3",
     "python-dotenv>=1.1.0",
     "rich>=14.0.0",
