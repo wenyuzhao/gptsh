@@ -72,7 +72,9 @@ class InlineTextPrinter:
         if table:
             self.terminator.append("|")
 
-    def emit(self, s: str):
+    def emit(self, s: str | None):
+        if s is None:
+            return
         self.p.emit(s)
 
     def peek(self):

@@ -161,8 +161,9 @@ class Session:
         console = rich.console.Console()
         while True:
             try:
+                print("\x1b[1;36m> \x1b[0m", end="", flush=True)
                 prompt = (
-                    await ng.input("> ", sync=False, persist="/tmp/autosh-history")
+                    await ng.input("", sync=False, persist="/tmp/autosh-history")
                 ).strip()
                 if prompt in ["exit", "quit"]:
                     break
@@ -187,34 +188,6 @@ class Session:
 
     def __create_loading_indicator(self):
         return asyncio.create_task(ng.loading.kana())
-
-    async def __loading(self, newline: bool = False):
-        chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-        char_width = 1
-        msg = "Loading..."
-        count = 0
-        print("\x1b[2m", end="", flush=True)
-        while True:
-            try:
-                print(chars[count], end="", flush=True)
-                print(" " + msg, end="", flush=True)
-                count += 1
-                await asyncio.sleep(0.1)
-                length = char_width + len(msg) + 1
-                print("\b" * length, end="", flush=True)
-                print(" " * length, end="", flush=True)
-                print("\b" * length, end="", flush=True)
-                if count == len(chars):
-                    count = 0
-            except asyncio.CancelledError:
-                length = char_width + len(msg) + 1
-                print("\b" * length, end="", flush=True)
-                print(" " * length, end="", flush=True)
-                print("\b" * length, end="", flush=True)
-                print("\x1b[0m", end="", flush=True)
-                if newline:
-                    print()
-                break
 
     async def __render_streamed_markdown(
         self,
