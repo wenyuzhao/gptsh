@@ -46,7 +46,7 @@ class TextStream:
     async def consume(self, n: int = 1):
         await self.__ensure_length(n)
         if len(self.__buf) < n:
-            raise ValueError("Not enough data to consume")
+            return None
         s = self.__buf[:n]
         self.__buf = self.__buf[n:]
         await self.__ensure_length(1)

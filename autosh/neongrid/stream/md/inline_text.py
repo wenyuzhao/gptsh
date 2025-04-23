@@ -203,6 +203,8 @@ class InlineTextPrinter:
                 # End bold or italics
                 self.emit(t.token)
                 scope.exit()
+            elif t.is_bold_or_italic():
+                self.emit(t.token)
             else:
                 # print(
                 #     "Invalid token:", t.token, f"[{self.peek()}]", scope.last == t.token
