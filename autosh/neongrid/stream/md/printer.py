@@ -89,10 +89,10 @@ class StreamedMarkdownPrinter:
         counter = [1]
         # first item
         if ordered:
-            self.emit("1. ")
+            self.emit("1.")
             await self.consume()
         else:
-            self.emit("• ")
+            self.emit("•")
         await self.consume()
         await self.parse_inline()
         while True:
@@ -105,9 +105,12 @@ class StreamedMarkdownPrinter:
                 await self.consume()
             if self.peek() is None:
                 return
-            if ordered and not await self.stream.ordered_list_label():
-                return
-            if not ordered and not await self.stream.unordered_list_label():
+            if await self.stream.ordered_list_label():
+                ordered = True
+                # return
+            elif await self.stream.unordered_list_label():
+                ordered = False
+            else:
                 return
             if not ordered:
                 await self.consume()
@@ -136,9 +139,9 @@ class StreamedMarkdownPrinter:
                 counter = counter[: depth + 1]
                 counter[depth] += 1
             if not ordered:
-                self.emit("  " * depth + "• ")
+                self.emit("   " * depth + "•")
             else:
-                self.emit("   " * depth + str(counter[depth]) + ". ")
+                self.emit("   " * depth + str(counter[depth]) + ".")
             await self.parse_inline()
 
     async def parse_blockquote(self):
