@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from autosh.md.printer import StreamedMarkdownPrinter
-from autosh.md.state import State
+from .printer import StreamedMarkdownPrinter
+from autosh.neongrid.style import STYLE, StyleScope
 
 
 @dataclass
@@ -28,13 +28,13 @@ class InvalidState(Exception):
 
 @dataclass
 class InlineScope:
-    state: State
+    state: StyleScope
 
-    stack: list[tuple[Keyword, State]] = field(default_factory=list)
+    stack: list[Keyword] = field(default_factory=list)
 
     @property
     def last(self) -> str | None:
-        return self.stack[-1][0].token if len(self.stack) > 0 else None
+        return self.stack[-1].token if len(self.stack) > 0 else None
 
     @property
     def strike(self) -> bool:
@@ -47,23 +47,22 @@ class InlineScope:
     def enter(self, kind: Keyword):
         match kind:
             case "`":
-                state = self.state._enter_scope(dim=True)
+                self.state.enter(dim=True)
             case "~~":
-                state = self.state._enter_scope(strike=True)
+                self.state.enter(strike=True)
             case _ if kind.is_bold():
-                state = self.state._enter_scope(bold=True)
+                self.state.enter(bold=True, color=STYLE.highlight)
             case _ if kind.is_italic():
-                state = self.state._enter_scope(italic=True)
+                self.state.enter(italic=True, color=STYLE.highlight)
             case _ if kind.is_bold_and_italic():
-                state = self.state._enter_scope(bold=True, italic=True)
+                self.state.enter(bold=True, italic=True, color=STYLE.highlight)
             case _:
-                state = self.state._enter_scope()
-        self.stack.append((kind, state))
+                self.state.enter()
+        self.stack.append(kind)
 
     def exit(self):
-        t = self.stack.pop()
-        state = t[1]
-        self.state._exit_scope(state)
+        self.stack.pop()
+        self.state.exit()
 
 
 class InlineTextPrinter:

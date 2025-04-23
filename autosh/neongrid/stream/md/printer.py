@@ -2,14 +2,14 @@ import os
 from typing import AsyncGenerator, Literal
 import unicodedata
 
-from autosh.md.state import Color, State
-from autosh.md.stream import TextStream
+from autosh.neongrid.style import STYLE, StyleScope
+from .stream import TextStream
 
 
 class StreamedMarkdownPrinter:
     def __init__(self, gen: AsyncGenerator[str, None]):
         self.stream = TextStream(gen)
-        self.state = State()
+        self.state = StyleScope()
 
     def emit(self, s: str):
         self.state.emit(s)
@@ -24,7 +24,7 @@ class StreamedMarkdownPrinter:
         return await self.stream.check(s, eof)
 
     async def parse_inline(self, consume_trailing_newline: bool = True):
-        from autosh.md.inline_text import InlineTextPrinter
+        from .inline_text import InlineTextPrinter
 
         itp = InlineTextPrinter(self)
         await itp.parse_inline(consume_trailing_newline)
@@ -39,29 +39,21 @@ class StreamedMarkdownPrinter:
                 break
         match hashes:
             case 1:
-                with self.state.style(bold=True, bg=Color.MAGENTA):
-                    with self.state.style(dim=True):
-                        self.emit("#" * hashes + " ")
+                with self.state.style(bold=True, bg=STYLE.highlight):
+                    self.emit(" ")
                     await self.parse_inline(consume_trailing_newline=False)
+                    self.emit(" ")
             case 2:
-                with self.state.style(bold=True, underline=True, color=Color.MAGENTA):
-                    with self.state.style(dim=True):
-                        self.emit("#" * hashes + " ")
+                with self.state.style(bold=True, underline=True, color=STYLE.highlight):
                     await self.parse_inline(consume_trailing_newline=False)
             case 3:
-                with self.state.style(bold=True, color=Color.MAGENTA):
-                    with self.state.style(dim=True):
-                        self.emit("#" * hashes + " ")
+                with self.state.style(bold=True, italic=True, color=STYLE.highlight):
                     await self.parse_inline(consume_trailing_newline=False)
             case 4:
-                with self.state.style(bold=True, italic=True, color=Color.MAGENTA):
-                    with self.state.style(dim=True):
-                        self.emit("#" * hashes + " ")
+                with self.state.style(bold=True, color=STYLE.highlight):
                     await self.parse_inline(consume_trailing_newline=False)
             case _:
                 with self.state.style(bold=True):
-                    with self.state.style(dim=True):
-                        self.emit("#" * hashes + " ")
                     await self.parse_inline(consume_trailing_newline=False)
         await self.consume()  # consume the newline
         self.emit("\n")
@@ -150,7 +142,7 @@ class StreamedMarkdownPrinter:
             await self.parse_inline()
 
     async def parse_blockquote(self):
-        from autosh.md.inline_text import InlineTextPrinter
+        from .inline_text import InlineTextPrinter
 
         while True:
             while self.peek() in [" ", "\t"]:
@@ -214,9 +206,9 @@ class StreamedMarkdownPrinter:
         # print top border
         with self.state.style(dim=True):
             for j, c in enumerate(rows[0]):
-                self.emit("┌" if j == 0 else "┬")
+                self.emit("╭" if j == 0 else "┬")
                 self.emit("─" * (col_widths[j] + 2))
-            self.emit("┐\n")
+            self.emit("╮\n")
         # print the table
         for i, row in enumerate(rows):
             for j, c in enumerate(row):
@@ -244,9 +236,9 @@ class StreamedMarkdownPrinter:
         # print bottom border
         with self.state.style(dim=True):
             for j, c in enumerate(rows[0]):
-                self.emit("└" if j == 0 else "┴")
+                self.emit("╰" if j == 0 else "┴")
                 self.emit("─" * (col_widths[j] + 2))
-            self.emit("┘\n")
+            self.emit("╯\n")
 
     async def parse_doc(self):
         await self.stream.init()

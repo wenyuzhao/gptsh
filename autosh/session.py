@@ -7,7 +7,7 @@ from agentia.message import UserMessage
 from agentia.plugins import PluginInitError
 
 from autosh.config import CLI_OPTIONS, CONFIG
-from autosh.md import stream_md
+from . import neongrid as ng
 from .plugins import create_plugins
 import rich
 import platform
@@ -166,23 +166,25 @@ class Session:
                     break
                 if len(prompt) == 0:
                     continue
-                loading = self.__create_loading_indicator(newline=True)
+                loading = self.__create_loading_indicator()
+                newline_after_loading = True
                 completion = self.agent.chat_completion(prompt, stream=True)
                 async for stream in completion:
                     if not loading:
                         loading = self.__create_loading_indicator()
-                    if await self.__render_streamed_markdown(stream, loading=loading):
+                        newline_after_loading = False
+                    if await self.__render_streamed_markdown(
+                        stream,
+                        loading=loading,
+                        newline_after_loading=newline_after_loading,
+                    ):
                         print()
                     loading = None
             except KeyboardInterrupt:
                 break
 
-    def __create_loading_indicator(self, newline: bool = False):
-        return (
-            asyncio.create_task(self.__loading(newline))
-            if sys.stdout.isatty()
-            else None
-        )
+    def __create_loading_indicator(self):
+        return asyncio.create_task(ng.loading.kana())
 
     async def __loading(self, newline: bool = False):
         chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
@@ -213,7 +215,10 @@ class Session:
                 break
 
     async def __render_streamed_markdown(
-        self, stream: MessageStream, loading: asyncio.Task[None] | None = None
+        self,
+        stream: MessageStream,
+        loading: asyncio.Task[None] | None = None,
+        newline_after_loading: bool = False,
     ):
         if sys.stdout.isatty():
             # buffer first few chars so we don't need to launch glow if there is no output
@@ -232,6 +237,8 @@ class Session:
             if loading:
                 loading.cancel()
                 await loading
+                if newline_after_loading:
+                    print()
 
             content = {"v": ""}
 
@@ -248,7 +255,7 @@ class Session:
                     except StopAsyncIteration:
                         break
 
-            await stream_md(gen())
+            await ng.stream.markdown(gen())
             return True
         else:
             has_content = False
