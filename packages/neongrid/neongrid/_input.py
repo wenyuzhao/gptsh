@@ -1,11 +1,13 @@
+from io import StringIO
 from pathlib import Path
 from types import FrameType
+from neongrid.style import STYLE
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory, History, FileHistory
 
 import inspect
-from typing import Awaitable, Literal, overload
+from typing import Any, Awaitable, Literal, overload
 
 import rich
 
@@ -102,15 +104,11 @@ def input(
 ) -> Awaitable[str]: ...
 
 
-def _print_prompt(prompt: str) -> None:
-    if prompt.startswith("rich:"):
-        prompt = prompt[5:]
-        rich.print(prompt, end="", flush=True)
-    elif prompt.startswith("md:") or prompt.startswith("markdown:"):
-        prompt = prompt.split(":", 1)[1]
-        printmd(prompt, end="", flush=True)
-    else:
-        print(prompt, end="", flush=True)
+def __get_prompt(prompt: str) -> Any:
+    style = "bold"
+    if c := STYLE.input_color:
+        style += f" fg:ansi{c.name}"
+    return [(style, prompt)]
 
 
 def input(
@@ -134,8 +132,8 @@ def input(
         auto_suggest=AutoSuggestFromHistory(),
         enable_history_search=True,
     )
-    _print_prompt(prompt)
+    p = __get_prompt(prompt)
     if sync:
-        return session.prompt("")
+        return session.prompt(p)
     else:
-        return session.prompt_async("")
+        return session.prompt_async(p)

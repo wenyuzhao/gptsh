@@ -27,10 +27,16 @@ class Color(Enum):
         self.foreground = foreground
         self.background = background
 
+    @property
+    def name(self) -> str:
+        return self._name_.lower()
+
 
 @dataclass
 class Style:
     highlight: Color = Color.MAGENTA
+
+    input_color: Color | None = Color.CYAN
 
 
 STYLE = Style()  # Default style

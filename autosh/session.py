@@ -169,9 +169,7 @@ class Session:
         while True:
             try:
                 prompt = (
-                    await ng.input(
-                        "\x1b[1;36m> \x1b[0m", sync=False, persist="/tmp/autosh-history"
-                    )
+                    await ng.input("> ", sync=False, persist="/tmp/autosh-history")
                 ).strip()
                 if prompt in ["exit", "quit"]:
                     break
