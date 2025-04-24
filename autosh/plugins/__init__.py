@@ -39,7 +39,6 @@ def __print_code_preview_banner(
     panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
     rich.print()
     rich.print(panel)
-    rich.print()
 
 
 def code_preview_banner(
@@ -61,6 +60,7 @@ def code_result_panel(
 ):
     if CLI_OPTIONS.quiet:
         return
+    print()
     if isinstance(out, str):
         out = out.strip()
     if isinstance(err, str):
@@ -72,8 +72,6 @@ def code_result_panel(
         text += (("\n---\n" if out else "") + err) if err else ""
         panel = Panel.fit(text, title=title, title_align="left", style="dim")
         rich.print(panel)
-    if not CLI_OPTIONS.quiet:
-        rich.print()
 
 
 from . import calc

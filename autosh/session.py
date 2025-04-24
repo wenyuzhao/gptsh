@@ -117,7 +117,7 @@ class Session:
         ):
             await self._print_help_and_exit(prompt)
         # Execute the prompt
-        loading = self.__create_loading_indicator()
+        loading = self.__create_loading_indicator() if sys.stdout.isatty() else None
         CLI_OPTIONS.prompt = prompt
         self.agent.history.add(self.__get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
@@ -142,7 +142,7 @@ class Session:
                 )
             )
         completion = self.agent.chat_completion(prompt, stream=True, events=True)
-        await self.__process_completion(completion, loading)
+        await self.__process_completion(completion, loading, False)
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -170,32 +170,40 @@ class Session:
         if CLI_OPTIONS.yes:
             return True
         result = Confirm.ask(
-            f"[magenta]{message}[/magenta]", default=True, case_sensitive=False
+            f"\n[magenta]{message}[/magenta]", default=True, case_sensitive=False
         )
-        if not CLI_OPTIONS.quiet:
-            rich.print()
         return result
 
     async def __process_completion(
-        self, completion: ChatCompletion[Event | MessageStream], loading: Loading
+        self,
+        completion: ChatCompletion[Event | MessageStream],
+        loading: Loading | None,
+        repl: bool,
     ):
         async for stream in completion:
-            await loading.finish()
+            if loading:
+                await loading.finish()
 
             if isinstance(stream, Event):
                 await self.__process_event(stream)
             else:
-                print()
+                if repl or not CLI_OPTIONS.quiet:
+                    print()
                 await self.__render_streamed_markdown(stream)
-                print()
 
-            loading = self.__create_loading_indicator()
+            if loading:
+                loading = self.__create_loading_indicator()
 
-        await loading.finish()
+        if loading:
+            await loading.finish()
 
     async def run_repl(self):
+        first = True
         while True:
             try:
+                if not first:
+                    print()
+                first = False
                 prompt = (
                     await ng.input("> ", sync=False, persist="/tmp/autosh-history")
                 ).strip()
@@ -207,7 +215,7 @@ class Session:
                 completion = self.agent.chat_completion(
                     prompt, stream=True, events=True
                 )
-                await self.__process_completion(completion, loading)
+                await self.__process_completion(completion, loading, True)
             except KeyboardInterrupt:
                 break
 
