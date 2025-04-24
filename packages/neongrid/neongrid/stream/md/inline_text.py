@@ -160,6 +160,13 @@ class InlineTextPrinter:
             return True
         return False
 
+    def is_end_or_non_alnum(self, c: str | None) -> bool:
+        if c is None:
+            return True
+        if c[0] in ["\n", " ", *self.terminator]:
+            return True
+        return c[0].isalnum() is False
+
     async def parse_inline(self, consume_trailing_newline: bool = True):
         last_is_space = False
         start = True
@@ -204,7 +211,12 @@ class InlineTextPrinter:
                 # Start bold or italics
                 scope.enter(t)
                 self.emit(t.token)
-            elif t.is_bold_or_italic() and not last_is_space and scope.last == t.token:
+            elif (
+                t.is_bold_or_italic()
+                and (not last_is_space)
+                and scope.last == t.token
+                and self.is_end_or_non_alnum(self.peek())
+            ):
                 # End bold or italics
                 self.emit(t.token)
                 scope.exit()
