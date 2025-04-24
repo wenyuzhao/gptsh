@@ -1,14 +1,12 @@
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import Literal, Optional, Protocol, Sequence, TypeVar, override
+from typing import Literal, Optional, Protocol, TypeVar
 from markdown_it import MarkdownIt
 import sys
-from markdown_it.renderer import RendererHTML
 from markdown_it.token import Token
-from markdown_it.utils import EnvType, OptionsDict
 
 from . import measure
-from .style import StyleScope, Ctrl, Color, STYLE
+from .style import StyleScope, STYLE
 
 _T = TypeVar("_T", contravariant=True)
 
