@@ -62,12 +62,11 @@ class StreamedMarkdownPrinter:
         while True:
             await self.parse_inline()
             if (
-                self.peek() != "\n"
+                self.peek() is not None
+                and self.peek() != "\n"
                 and not await self.stream.non_paragraph_block_start()
             ):
-                if self.peek() == "\n":
-                    await self.consume()
-                break
+                continue
             else:
                 break
 
