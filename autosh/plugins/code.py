@@ -1,11 +1,11 @@
-from agentia.plugins import tool, Plugin
+from agentia import tool, Plugin, UserConsentEvent
 from typing import Annotated
 import traceback
 from rich.syntax import Syntax
 from rich.console import group
 from contextlib import redirect_stdout, redirect_stderr
 import io
-from . import confirm, code_preview_banner, code_result_panel
+from . import code_preview_banner, code_result_panel
 
 
 @group()
@@ -39,7 +39,7 @@ class CodePlugin(Plugin):
         The python code must be a valid python source file that accepts no inputs.
         Print results to stdout or stderr.
         """
-        if not confirm("Execute this code?"):
+        if not (yield UserConsentEvent("Execute this code?")):
             return {"error": "The user declined to execute the command."}
 
         out = io.StringIO()

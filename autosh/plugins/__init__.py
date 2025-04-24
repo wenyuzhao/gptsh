@@ -54,17 +54,6 @@ def code_preview_banner(
     )
 
 
-def confirm(message: str):
-    if CLI_OPTIONS.yes:
-        return True
-    result = Confirm.ask(
-        f"[magenta]{message}[/magenta]", default=True, case_sensitive=False
-    )
-    if not CLI_OPTIONS.quiet:
-        rich.print()
-    return result
-
-
 def code_result_panel(
     title: str,
     out: str | None = None,

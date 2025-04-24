@@ -8,6 +8,7 @@ from agentia import (
     ToolCallEvent,
     MessageStream,
     ChatCompletion,
+    UserConsentEvent,
 )
 from agentia.plugins import PluginInitError
 from neongrid.loading import Loading
@@ -17,7 +18,7 @@ import neongrid as ng
 from .plugins import create_plugins
 import rich
 import platform
-from rich.prompt import Prompt
+from rich.prompt import Confirm
 
 
 INSTRUCTIONS = f"""
@@ -85,13 +86,13 @@ class Session:
                 * -h, --help     Show this message and exit.
             """,
         )
-        agent.history.add(self._get_argv_message())
+        agent.history.add(self.__get_argv_message())
         completion = agent.chat_completion(prompt, stream=True)
         async for stream in completion:
             await self.__render_streamed_markdown(stream)
         sys.exit(0)
 
-    def _get_argv_message(self):
+    def __get_argv_message(self):
         args = str(CLI_OPTIONS.args)
         if not CLI_OPTIONS.script:
             cmd = Path(sys.argv[0]).name
@@ -118,7 +119,7 @@ class Session:
         # Execute the prompt
         loading = self.__create_loading_indicator()
         CLI_OPTIONS.prompt = prompt
-        self.agent.history.add(self._get_argv_message())
+        self.agent.history.add(self.__get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
             self.agent.history.add(
                 UserMessage(
@@ -159,10 +160,21 @@ class Session:
         await self.exec_prompt(prompt)
 
     async def __process_event(self, e: Event):
-        if not isinstance(e, ToolCallEvent) or e.result is not None:
-            return
-        if banner := (e.metadata or {}).get("banner"):
-            banner(e.arguments)
+        if isinstance(e, UserConsentEvent):
+            e.response = await self.__confirm(e.message)
+        if isinstance(e, ToolCallEvent) and e.result is None:
+            if banner := (e.metadata or {}).get("banner"):
+                banner(e.arguments)
+
+    async def __confirm(self, message: str) -> bool:
+        if CLI_OPTIONS.yes:
+            return True
+        result = Confirm.ask(
+            f"[magenta]{message}[/magenta]", default=True, case_sensitive=False
+        )
+        if not CLI_OPTIONS.quiet:
+            rich.print()
+        return result
 
     async def __process_completion(
         self, completion: ChatCompletion[Event | MessageStream], loading: Loading

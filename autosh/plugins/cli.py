@@ -1,14 +1,14 @@
 import os
 import sys
 from typing import Annotated
-from agentia.plugins import Plugin, tool
+from agentia import Plugin, tool, UserConsentEvent
 import rich
 import subprocess
 from enum import StrEnum
 
 from autosh.config import CLI_OPTIONS
 
-from . import confirm, code_result_panel, code_preview_banner, simple_banner
+from . import code_result_panel, code_preview_banner, simple_banner
 
 
 class Color(StrEnum):
@@ -171,7 +171,7 @@ class CLIPlugin(Plugin):
             raise FileExistsError(
                 f"No, you cannot overwrite the script file `{path}`. You're likely writing to it by mistake."
             )
-        if not confirm("Write file?"):
+        if not (yield UserConsentEvent("Write file?")):
             return {"error": "The user declined the write operation."}
         flag = "a" if append else "w"
         if create:
@@ -236,7 +236,7 @@ class CLIPlugin(Plugin):
             return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Ask for confirmation
-        if not confirm("Execute this command?"):
+        if not (yield UserConsentEvent("Execute this command?")):
             return {"error": "The user declined to execute the command."}
 
         # Execute the command
