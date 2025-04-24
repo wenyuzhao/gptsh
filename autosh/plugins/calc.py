@@ -1,12 +1,16 @@
 from agentia.plugins import tool, Plugin
 from typing import Annotated
-from . import banner
+from . import simple_banner
 
 
 class CalculatorPlugin(Plugin):
     NAME = "calc"
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner("CALC", dim=lambda a: a.get("expression", ""))
+        }
+    )
     def evaluate(
         self,
         expression: Annotated[
@@ -16,7 +20,6 @@ class CalculatorPlugin(Plugin):
         """
         Execute a math expression and return the result. The expression must be an valid python expression that can be execuated by `eval()`.
         """
-        banner("CALC", expression)
 
         result = eval(expression)
         return result

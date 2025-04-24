@@ -1,8 +1,8 @@
-from typing import AsyncGenerator
+from typing import AsyncIterator
 
 
 class TextStream:
-    def __init__(self, gen: AsyncGenerator[str, None]):
+    def __init__(self, gen: AsyncIterator[str]):
         self.__stream = gen
         self.__buf: str = ""
         self.__eof = False

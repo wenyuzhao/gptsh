@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Coroutine
 
 from .measure import text_display_width
 from .style import Color
@@ -61,26 +62,38 @@ async def __frames(
             break
 
 
-async def braille(label: str = "Loading..."):
+def braille(label: str = "Loading..."):
     chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-    await __frames(chars, label)
+    return Loading(__frames(chars, label))
 
 
-async def breathing_cursor(label: str = "Loading..."):
+def breathing_cursor(label: str = "Loading..."):
     chars = "▉▊▋▌▍▎▏▎▍▌▋▊▉"
-    await __frames(chars, label, update_label_color=False)
+    return Loading(__frames(chars, label, update_label_color=False))
 
 
-async def clock(label: str = "Loading..."):
+def clock(label: str = "Loading..."):
     chars = "🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛"
-    await __frames(chars, label)
+    return Loading(__frames(chars, label))
 
 
-async def globe(label: str = "Loading..."):
+def globe(label: str = "Loading..."):
     chars = "🌍🌎🌏"
-    await __frames(chars, label, fps=5)
+    return Loading(__frames(chars, label, fps=5))
 
 
-async def kana(label: str = "Loading..."):
+def kana(label: str = "Loading..."):
     chars = "ｦｧｨｩｪｫｬｭｮｯｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ"
-    await __frames(chars, label, fps=10, frames_per_color=5)
+    return Loading(__frames(chars, label, fps=10, frames_per_color=5))
+
+
+class Loading:
+    def __init__(self, fn: Coroutine[Any, Any, None]):
+        self.__task = asyncio.create_task(fn)
+
+    async def finish(self):
+        self.__task.cancel()
+        try:
+            await self.__task
+        except asyncio.CancelledError:
+            pass

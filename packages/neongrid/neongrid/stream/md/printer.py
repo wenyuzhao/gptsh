@@ -1,5 +1,5 @@
 import os
-from typing import AsyncGenerator, Literal
+from typing import AsyncIterator, Literal
 import unicodedata
 
 from neongrid.style import STYLE, StyleScope
@@ -7,7 +7,7 @@ from .stream import TextStream
 
 
 class StreamedMarkdownPrinter:
-    def __init__(self, gen: AsyncGenerator[str, None]):
+    def __init__(self, gen: AsyncIterator[str]):
         self.stream = TextStream(gen)
         self.state = StyleScope()
 

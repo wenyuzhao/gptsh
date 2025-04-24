@@ -11,7 +11,7 @@ members = [
 [[package]]
 name = "agentia"
 version = "0.0.6"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "../agentia" }
 dependencies = [
     { name = "llama-index" },
     { name = "llama-index-vector-stores-chroma" },
@@ -27,9 +27,40 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/22/47c2c937b36b4e30efabba772704d9257414e5de7dec876ba7620d7a5377/agentia-0.0.6.tar.gz", hash = "sha256:865486e76d13b4ecff2402d5e92ecd96618ea429094364091500e6236b9faeb1", size = 47527 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/fe/b6deb900bbd1e44d993da7cae4cb835c37b630baeed1e2100a2baf9a8375/agentia-0.0.6-py3-none-any.whl", hash = "sha256:5b444b03e9034af3a49a38286c38150be7395c316fabf98c53a67d14d9b7946f", size = 62058 },
+
+[package.metadata]
+requires-dist = [
+    { name = "agentia", extras = ["plugins"], marker = "extra == 'all'" },
+    { name = "dataforseo-client", marker = "extra == 'plugins'", specifier = ">=1.0.45" },
+    { name = "google-api-python-client", marker = "extra == 'plugins'", specifier = ">=2.166.0" },
+    { name = "google-auth-oauthlib", marker = "extra == 'plugins'", specifier = ">=1.2.1" },
+    { name = "llama-index", specifier = ">=0.12.9,<0.13" },
+    { name = "llama-index-vector-stores-chroma", specifier = ">=0.4.1,<0.5" },
+    { name = "markdownify", marker = "extra == 'plugins'", specifier = ">=1.1.0" },
+    { name = "openai", specifier = ">=1.58.1,<2" },
+    { name = "pydantic", specifier = ">=2.10.4" },
+    { name = "pymstodo", marker = "extra == 'plugins'", specifier = ">=0.2.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0,<2" },
+    { name = "python-slugify", specifier = ">=8.0.4,<9" },
+    { name = "pyyaml", specifier = ">=6.0.2,<7" },
+    { name = "requests", specifier = ">=2.31.0,<3" },
+    { name = "rich", specifier = ">=14.0.0" },
+    { name = "shortuuid", specifier = ">=1.0.13" },
+    { name = "streamlit", marker = "extra == 'all'", specifier = ">=1.44.0" },
+    { name = "streamlit-oauth", marker = "extra == 'all'", specifier = ">=0.1.11" },
+    { name = "tavily-python", marker = "extra == 'plugins'", specifier = ">=0.5.4" },
+    { name = "tiktoken", specifier = ">=0.8.0,<0.9" },
+    { name = "tomlkit", specifier = ">=0.13.2" },
+    { name = "typer", specifier = ">=0.12.5,<0.13" },
+]
+provides-extras = ["plugins", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel", specifier = ">=6.23.2,<7" },
+    { name = "pyright", specifier = ">=1.1.361,<2" },
+    { name = "pytest", specifier = ">=7.3.2,<8" },
+    { name = "pytest-asyncio", specifier = ">=0.21.1,<0.22" },
 ]
 
 [[package]]
@@ -155,7 +186,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentia", specifier = ">=0.0.6" },
+    { name = "agentia", editable = "../agentia" },
     { name = "asyncio", specifier = ">=3.4.3" },
     { name = "markdownify", specifier = ">=1.1.0" },
     { name = "neongrid", editable = "packages/neongrid" },

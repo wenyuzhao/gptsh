@@ -3,7 +3,7 @@ from typing import Annotated, override
 import os
 from tavily import TavilyClient
 
-from autosh.plugins import banner
+from autosh.plugins import simple_banner
 
 
 class SearchPlugin(Plugin):
@@ -17,7 +17,11 @@ class SearchPlugin(Plugin):
             raise ValueError("Please set the TAVILY_API_KEY environment variable.")
         self.__tavily = TavilyClient(api_key=key)
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner("WEB SEARCH", dim=lambda a: a.get("query", "")),
+        }
+    )
     async def web_search(
         self,
         query: Annotated[
@@ -29,8 +33,6 @@ class SearchPlugin(Plugin):
         Returning the top related search results in json format.
         When necessary, you need to combine this tool with the get_webpage_content tools (if available), to browse the web in depth by jumping through links.
         """
-        banner("WEB SEARCH", dim=query)
-
         tavily_results = self.__tavily.search(
             query=query,
             search_depth="advanced",
@@ -41,7 +43,11 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner("NEWS SEARCH", dim=lambda a: a.get("query", "")),
+        }
+    )
     async def news_search(
         self,
         query: Annotated[
@@ -52,7 +58,6 @@ class SearchPlugin(Plugin):
         Perform news search on the given query.
         Returning the top related results in json format.
         """
-        banner("NEWS SEARCH", dim=query)
 
         tavily_results = self.__tavily.search(
             query=query,
@@ -65,7 +70,11 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner("FINANCE SEARCH", dim=lambda a: a.get("query", ""))
+        }
+    )
     async def finance_search(
         self,
         query: Annotated[
@@ -76,7 +85,6 @@ class SearchPlugin(Plugin):
         Search for finance-related news and information on the given query.
         Returning the top related results in json format.
         """
-        banner("FINANCE SEARCH", dim=query)
 
         tavily_results = self.__tavily.search(
             query=query,

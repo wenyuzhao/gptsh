@@ -1,9 +1,7 @@
 import asyncio
 from pathlib import Path
 import sys
-from agentia import Agent
-from agentia.chat_completion import MessageStream
-from agentia.message import UserMessage
+from agentia import Agent, UserMessage, Event, ToolCallEvent, MessageStream
 from agentia.plugins import PluginInitError
 
 from autosh.config import CLI_OPTIONS, CONFIG
@@ -110,7 +108,7 @@ class Session:
         ):
             await self._print_help_and_exit(prompt)
         # Execute the prompt
-        loading = self.__create_loading_indicator()
+        # loading = self.__create_loading_indicator()
         CLI_OPTIONS.prompt = prompt
         self.agent.history.add(self._get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
@@ -134,13 +132,17 @@ class Session:
                     role="user",
                 )
             )
-        completion = self.agent.chat_completion(prompt, stream=True)
+        completion = self.agent.chat_completion(prompt, stream=True, events=True)
         async for stream in completion:
-            if not loading:
-                loading = self.__create_loading_indicator()
-            if await self.__render_streamed_markdown(stream, loading=loading):
-                print()
-            loading = None
+            print(stream)
+            # if not loading:
+            #     loading = self.__create_loading_indicator()
+            if isinstance(stream, Event):
+                ...
+            else:
+                if await self.__render_streamed_markdown(stream):
+                    print()
+            # loading = None
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -157,6 +159,12 @@ class Session:
             prompt = f.read()
         await self.exec_prompt(prompt)
 
+    async def __process_event(self, e: Event):
+        if not isinstance(e, ToolCallEvent) or e.result is not None:
+            return
+        if banner := (e.metadata or {}).get("banner"):
+            banner(e.arguments)
+
     async def run_repl(self):
         while True:
             try:
@@ -170,73 +178,32 @@ class Session:
                 if len(prompt) == 0:
                     continue
                 loading = self.__create_loading_indicator()
-                newline_after_loading = True
-                completion = self.agent.chat_completion(prompt, stream=True)
+                completion = self.agent.chat_completion(
+                    prompt, stream=True, events=True
+                )
                 async for stream in completion:
-                    if not loading:
-                        loading = self.__create_loading_indicator()
-                        newline_after_loading = False
-                    if await self.__render_streamed_markdown(
-                        stream,
-                        loading=loading,
-                        newline_after_loading=newline_after_loading,
-                    ):
+                    await loading.finish()
+
+                    if isinstance(stream, Event):
+                        await self.__process_event(stream)
+                    else:
                         print()
-                    loading = None
+                        await self.__render_streamed_markdown(stream)
+                        print()
+
+                    loading = self.__create_loading_indicator()
+
+                await loading.finish()
             except KeyboardInterrupt:
                 break
 
     def __create_loading_indicator(self):
-        return asyncio.create_task(ng.loading.kana())
+        return ng.loading.kana()
 
-    async def __render_streamed_markdown(
-        self,
-        stream: MessageStream,
-        loading: asyncio.Task[None] | None = None,
-        newline_after_loading: bool = False,
-    ):
+    async def __render_streamed_markdown(self, stream: MessageStream):
         if sys.stdout.isatty():
-            # buffer first few chars so we don't need to launch glow if there is no output
-            chunks = aiter(stream)
-            buf = ""
-            while len(buf) < 8:
-                try:
-                    buf += await anext(chunks)
-                except StopAsyncIteration:
-                    if len(buf) == 0:
-                        if loading:
-                            loading.cancel()
-                            await loading
-                        return False
-                    break
-            if loading:
-                loading.cancel()
-                await loading
-                if newline_after_loading:
-                    print()
-
-            content = {"v": ""}
-
-            async def gen():
-                content["v"] = buf
-                if buf:
-                    yield buf
-                while True:
-                    try:
-                        s = await anext(chunks)
-                        content["v"] += s
-                        for c in s:
-                            yield c
-                    except StopAsyncIteration:
-                        break
-
-            await ng.stream.markdown(gen())
+            await ng.stream.markdown(aiter(stream))
             return True
         else:
-            has_content = False
             async for chunk in stream:
-                if chunk == "":
-                    continue
-                has_content = True
                 print(chunk, end="", flush=True)
-            return has_content

@@ -167,7 +167,7 @@ class InlineTextPrinter:
                     if self.peek() == "\n":
                         await self.consume()
                     self.emit("\n")
-                return
+                break
             elif isinstance(t, str):
                 # Space or normal text
                 if t[0] == " ":
@@ -215,3 +215,5 @@ class InlineTextPrinter:
 
             last_is_space = curr_is_space
             start = False
+        while len(scope.stack) > 0:
+            scope.exit()

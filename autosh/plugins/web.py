@@ -7,7 +7,7 @@ from markdownify import markdownify
 import uuid
 from tavily import TavilyClient
 
-from autosh.plugins import banner
+from autosh.plugins import simple_banner
 
 
 class WebPlugin(Plugin):
@@ -47,7 +47,7 @@ class WebPlugin(Plugin):
         md = markdownify(res.text)
         return {"content": md}
 
-    @tool
+    @tool(metadata={"banner": simple_banner("BROWSE", dim=lambda a: a.get("url", ""))})
     def get_webpage_content(
         self,
         url: Annotated[str, "The URL of the web page to get the content of"],
@@ -57,7 +57,6 @@ class WebPlugin(Plugin):
         You can always use this tool to directly access web content or access external sites.
         Use it at any time when you think you may need to access the internet.
         """
-        banner("BROWSE", dim=url)
 
         result = self.__tavily.extract(
             urls=url,

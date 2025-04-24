@@ -8,7 +8,7 @@ from enum import StrEnum
 
 from autosh.config import CLI_OPTIONS
 
-from . import banner, confirm, cmd_result_panel, cmd_preview_panel
+from . import confirm, code_result_panel, code_preview_banner, simple_banner
 
 
 class Color(StrEnum):
@@ -59,22 +59,20 @@ class CLIPlugin(Plugin):
         rich.print(text, file=sys.stderr if stderr else sys.stdout, end=end)
         return "DONE. You can continue and no need to repeat the text"
 
-    @tool
+    @tool(metadata={"banner": simple_banner("CWD", dim=lambda a: a.get("path", ""))})
     def chdir(self, path: Annotated[str, "The path to the new working directory"]):
         """
         Changes the current working directory of the terminal to another directory.
         """
-        banner("CWD", path)
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path `{path}` does not exist.")
         os.chdir(path)
 
-    @tool
+    @tool(metadata={"banner": simple_banner("GET ARGV")})
     def get_argv(self):
         """
         Get the command line arguments.
         """
-        banner("GET ARGV")
         if not CLI_OPTIONS.script:
             return CLI_OPTIONS.args
         return {
@@ -82,28 +80,34 @@ class CLIPlugin(Plugin):
             "args": CLI_OPTIONS.args,
         }
 
-    @tool
+    @tool(metadata={"banner": simple_banner("GET ENV", dim=lambda a: a.get("key", ""))})
     def get_env(self, key: Annotated[str, "The environment variable to get"]):
         """
         Get an environment variable.
         """
-        banner("GET ENV", key)
         if key not in os.environ:
             raise KeyError(f"Environment variable `{key}` does not exist.")
         return os.environ[key]
 
-    @tool
+    @tool(metadata={"banner": simple_banner("GET ALL ENVS")})
     def get_all_envs(self):
         """
         Get all environment variables.
         """
-        banner("GET ALL ENVS")
         envs = {}
         for key, value in os.environ.items():
             envs[key] = value
         return {"envs": envs}
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner(
+                tag=lambda a: "SET ENV" if a.get("value") else "DEL ENV",
+                text=lambda a: a.get("key", ""),
+                dim=lambda a: a.get("value", "") or "",
+            ),
+        }
+    )
     def update_env(
         self,
         key: Annotated[str, "The environment variable to set"],
@@ -116,15 +120,13 @@ class CLIPlugin(Plugin):
         Set or delete an environment variable.
         """
         if value is None:
-            banner("DEL ENV", key)
             if key in os.environ:
                 del os.environ[key]
         else:
-            banner("SET ENV", key, value)
             os.environ[key] = value
         return f"DONE"
 
-    @tool
+    @tool(metadata={"banner": simple_banner("READ", dim=lambda a: a.get("path", ""))})
     def read(
         self,
         path: Annotated[str, "The path to the file to read"],
@@ -132,7 +134,6 @@ class CLIPlugin(Plugin):
         """
         Read a file and print its content.
         """
-        banner("READ", path)
         if not os.path.exists(path):
             raise FileNotFoundError(f"File `{path}` does not exist.")
         if not os.path.isfile(path):
@@ -141,7 +142,15 @@ class CLIPlugin(Plugin):
             content = f.read()
         return content
 
-    @tool
+    @tool(
+        metadata={
+            "banner": simple_banner(
+                tag=lambda a: "WRITE" if not a.get("append") else "APPEND",
+                text=lambda a: a.get("path", ""),
+                dim=lambda a: f"({len(a.get('content', ''))} bytes)",
+            ),
+        }
+    )
     def write(
         self,
         path: Annotated[str, "The path to the file to write"],
@@ -154,8 +163,6 @@ class CLIPlugin(Plugin):
         """
         Write or append text content to a file.
         """
-        banner("WRITE" if not append else "APPEND", path, f"({len(content)} bytes)")
-
         if not create and not os.path.exists(path):
             raise FileNotFoundError(f"File `{path}` does not exist.")
         if not create and not os.path.isfile(path):
@@ -200,7 +207,15 @@ class CLIPlugin(Plugin):
             raise RuntimeError("No piped input from stdin")
         return sys.stdin.read()
 
-    @tool
+    @tool(
+        metadata={
+            "banner": code_preview_banner(
+                title="Run Command",
+                short=lambda a: f"[magenta][bold]➜[/bold] [italic]{a.get("command", "")}[/italic][/magenta]",
+                content=lambda a: f"[magenta][bold]➜[/bold] [italic]{a.get("command", "")}[/italic][/magenta]\n\n[dim]{a.get("explanation", "")}[/dim]",
+            )
+        }
+    )
     def exec(
         self,
         command: Annotated[
@@ -220,13 +235,6 @@ class CLIPlugin(Plugin):
             cmd = ["bash", "-c", command]
             return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Print the command and explanation
-        cmd_preview_panel(
-            title="Run Command",
-            content=f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]\n\n[dim]{explanation}[/dim]",
-            short=f"[magenta][bold]➜[/bold] [italic]{command}[/italic][/magenta]",
-        )
-
         # Ask for confirmation
         if not confirm("Execute this command?"):
             return {"error": "The user declined to execute the command."}
@@ -245,7 +253,7 @@ class CLIPlugin(Plugin):
                     title = f"[red][bold]✘[/bold] Command Failed [{proc_result.returncode}][/red]"
                 else:
                     title = "[green][bold]✔[/bold] Command Finished[/green]"
-            cmd_result_panel(title, out, err)
+            code_result_panel(title, out, err)
 
         result = {
             "stdout": proc_result.stdout.decode("utf-8"),
@@ -255,10 +263,9 @@ class CLIPlugin(Plugin):
         }
         return result
 
-    @tool
+    @tool(metadata={"banner": simple_banner("EXIT")})
     def exit(self, exitcode: Annotated[int, "The exit code of this shell session"] = 0):
         """
         Exit the current shell session with an optional exit code.
         """
-        banner("EXIT", str(exitcode))
         sys.exit(exitcode)

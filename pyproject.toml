@@ -5,7 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "agentia>=0.0.6",
     "asyncio>=3.4.3",
     "markdownify>=1.1.0",
     "prompt-toolkit>=3.0.51",
@@ -16,6 +15,7 @@ dependencies = [
     "typer>=0.12.5",
     "tzlocal>=5.3.1",
     "neongrid",
+    "agentia",
 ]
 
 [project.scripts]
@@ -30,6 +30,7 @@ include = ["autosh"]
 
 [tool.uv.sources]
 neongrid = { workspace = true }
+agentia = { path = "../agentia", editable = true }
 # agentia = { path = "../agentia", editable = true }
 
 [tool.uv.workspace]

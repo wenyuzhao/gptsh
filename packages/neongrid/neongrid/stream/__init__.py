@@ -1,7 +1,7 @@
-from typing import AsyncGenerator
+from typing import AsyncIterator
 
 
-async def markdown(stream: AsyncGenerator[str, None]):
+async def markdown(stream: AsyncIterator[str]):
     from .md.printer import StreamedMarkdownPrinter
 
     mp = StreamedMarkdownPrinter(stream)

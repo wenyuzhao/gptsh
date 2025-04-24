@@ -1,3 +1,4 @@
+from typing import Any, Callable
 import rich
 from rich.prompt import Confirm
 from rich.panel import Panel
@@ -5,16 +6,52 @@ from rich.console import RenderableType
 from autosh.config import CLI_OPTIONS, CONFIG
 
 
-def banner(tag: str, text: str | None = None, dim: str | None = None):
+def __print_simple_banner(tag: str, text: str | None = None, dim: str | None = None):
     if CLI_OPTIONS.quiet:
         return
-    s = f"[bold magenta]{tag}[/bold magenta]"
+    s = f"\n[bold magenta]{tag}[/bold magenta]"
     if text:
         s += f" [italic magenta]{text}[/italic magenta]"
     if dim:
         s += f" [italic dim]{dim}[/italic dim]"
-    s += "\n"
     rich.print(s)
+
+
+def simple_banner(
+    tag: str | Callable[[Any], str],
+    text: Callable[[Any], str] | None = None,
+    dim: Callable[[Any], str] | None = None,
+):
+    return lambda x: __print_simple_banner(
+        tag if isinstance(tag, str) else tag(x),
+        text(x) if text else None,
+        dim(x) if dim else None,
+    )
+
+
+def __print_code_preview_banner(
+    title: str, content: RenderableType, short: str | None = None
+):
+    if CLI_OPTIONS.quiet:
+        if short and not CLI_OPTIONS.yes:
+            rich.print(f"\n[magenta]{short}[/magenta]\n")
+        return
+    panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
+    rich.print()
+    rich.print(panel)
+    rich.print()
+
+
+def code_preview_banner(
+    title: str | Callable[[Any], str],
+    short: str | Callable[[Any], str],
+    content: Callable[[Any], RenderableType],
+):
+    return lambda x: __print_code_preview_banner(
+        title=title if isinstance(title, str) else title(x),
+        content=content(x),
+        short=short if isinstance(short, str) else short(x),
+    )
 
 
 def confirm(message: str):
@@ -28,17 +65,7 @@ def confirm(message: str):
     return result
 
 
-def cmd_preview_panel(title: str, content: RenderableType, short: str | None = None):
-    if CLI_OPTIONS.quiet:
-        if short and not CLI_OPTIONS.yes:
-            rich.print(f"[magenta]{short}[/magenta]\n")
-        return
-    panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
-    rich.print(panel)
-    rich.print()
-
-
-def cmd_result_panel(
+def code_result_panel(
     title: str,
     out: str | None = None,
     err: str | None = None,

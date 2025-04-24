@@ -5,11 +5,28 @@ from rich.syntax import Syntax
 from rich.console import group
 from contextlib import redirect_stdout, redirect_stderr
 import io
-from . import confirm, cmd_result_panel, cmd_preview_panel
+from . import confirm, code_preview_banner, code_result_panel
+
+
+@group()
+def code_with_explanation(code: str, explanation: str):
+    yield Syntax(code.strip(), "python")
+    yield "\n[dim]───[/dim]\n"
+    yield f"[dim]{explanation}[/dim]"
 
 
 class CodePlugin(Plugin):
-    @tool
+    @tool(
+        metadata={
+            "banner": code_preview_banner(
+                title="Run Python",
+                short="[bold]RUN[/bold] [italic]Python Code[/italic]",
+                content=lambda a: code_with_explanation(
+                    a.get("python_code", ""), a.get("explanation", "")
+                ),
+            )
+        }
+    )
     def execute(
         self,
         python_code: Annotated[str, "The python code to run."],
@@ -22,19 +39,6 @@ class CodePlugin(Plugin):
         The python code must be a valid python source file that accepts no inputs.
         Print results to stdout or stderr.
         """
-
-        @group()
-        def code_with_explanation():
-            yield Syntax(python_code.strip(), "python")
-            yield "\n[dim]───[/dim]\n"
-            yield f"[dim]{explanation}[/dim]"
-
-        cmd_preview_panel(
-            title="Run Python",
-            content=code_with_explanation(),
-            short=f"[bold]RUN[/bold] [italic]Python Code[/italic]",
-        )
-
         if not confirm("Execute this code?"):
             return {"error": "The user declined to execute the command."}
 
@@ -64,5 +68,5 @@ class CodePlugin(Plugin):
                         "traceback": repr(traceback.format_exc()),
                     }
 
-        cmd_result_panel(title, o, e)
+        code_result_panel(title, o, e)
         return result
