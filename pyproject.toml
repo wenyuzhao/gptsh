@@ -30,6 +30,9 @@ include = ["autosh"]
 # [tool.uv.sources]
 # agentia = { path = "../agentia", editable = true }
 
+[tool.uv.workspace]
+members = ["autosh", "neongrid"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -2,7 +2,7 @@ import os
 from typing import AsyncGenerator, Literal
 import unicodedata
 
-from autosh.neongrid.style import STYLE, StyleScope
+from neongrid.style import STYLE, StyleScope
 from .stream import TextStream
 
 

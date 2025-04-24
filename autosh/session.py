@@ -7,7 +7,7 @@ from agentia.message import UserMessage
 from agentia.plugins import PluginInitError
 
 from autosh.config import CLI_OPTIONS, CONFIG
-from . import neongrid as ng
+import neongrid as ng
 from .plugins import create_plugins
 import rich
 import platform

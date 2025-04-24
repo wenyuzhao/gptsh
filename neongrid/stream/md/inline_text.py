@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from .printer import StreamedMarkdownPrinter
-from autosh.neongrid.style import STYLE, StyleScope
+from neongrid.style import STYLE, StyleScope
 
 
 @dataclass
