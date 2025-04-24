@@ -10,7 +10,7 @@ members = [
 
 [[package]]
 name = "agentia"
-version = "0.0.7"
+version = "0.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index" },
@@ -27,9 +27,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/55/3011a54eef6d76d71092f51525c27ee437d8292d6ad96bc51adb406644e9/agentia-0.0.7.tar.gz", hash = "sha256:bded424953aa440401111743d20b00eee119fa949b63cdc04b8ed5fd51aefc38", size = 48485 }
+sdist = { url = "https://files.pythonhosted.org/packages/75/53/ba9f89251f2fa513965d4fcb59d1ce384ac87a1eace474ed48844321c481/agentia-0.0.8.tar.gz", hash = "sha256:082afec437c12b0e8f5371b21887a07761403c0853a2add354a9899da5f10d97", size = 48502 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/fc/0eb175f4d7b9239992c7e1303c86ecf227c0dcede167d82635c043adff9b/agentia-0.0.7-py3-none-any.whl", hash = "sha256:49f1a62c42991cf33c74d40dfe0ba995255ae55f5562a64c01ff2d2a81773260", size = 63089 },
+    { url = "https://files.pythonhosted.org/packages/84/b8/ed791ba605f84aff0cc7ddb244c7fb66f643f69b2601a0e1342cf9379f74/agentia-0.0.8-py3-none-any.whl", hash = "sha256:a6353c7e2aba5c8ee703b68851551d35936240363ffe039cb7a1a84937b574aa", size = 63101 },
 ]
 
 [[package]]
@@ -155,7 +155,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentia", specifier = ">=0.0.7" },
+    { name = "agentia", specifier = ">=0.0.8" },
     { name = "asyncio", specifier = ">=3.4.3" },
     { name = "markdownify", specifier = ">=1.1.0" },
     { name = "neongrid", editable = "packages/neongrid" },

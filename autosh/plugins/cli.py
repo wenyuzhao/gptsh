@@ -67,6 +67,7 @@ class CLIPlugin(Plugin):
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path `{path}` does not exist.")
         os.chdir(path)
+        return f"DONE"
 
     @tool(metadata={"banner": simple_banner("GET ARGV")})
     def get_argv(self):
@@ -269,3 +270,4 @@ class CLIPlugin(Plugin):
         Exit the current shell session with an optional exit code.
         """
         sys.exit(exitcode)
+        return f"EXITED with code {exitcode}"
