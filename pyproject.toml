@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "agentia>=0.0.5",
+    "agentia>=0.0.6",
     "asyncio>=3.4.3",
     "markdownify>=1.1.0",
     "prompt-toolkit>=3.0.51",

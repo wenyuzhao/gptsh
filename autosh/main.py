@@ -1,9 +1,11 @@
 import os
+
+os.environ["AGENTIA_DISABLE_PLUGINS"] = "1"
+
 from pathlib import Path
 import rich
 import typer
 import asyncio
-import dotenv
 from rich.columns import Columns
 from rich.panel import Panel
 import argparse
@@ -26,6 +28,8 @@ app = typer.Typer(
 async def start_session(prompt: str | None, args: list[str]):
     CLI_OPTIONS.args = args
     session = Session()
+    os.environ["OPENROUTER_HAS_REASONING"] = "false"
+    os.environ["OPENROUTER_INCLUDE_REASONING"] = "false"
     await session.init()
     piped_stdin = not sys.stdin.isatty()
     if piped_stdin and not CLI_OPTIONS.yes:
