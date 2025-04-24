@@ -15,6 +15,7 @@ dependencies = [
     "tavily-python>=0.5.4",
     "typer>=0.12.5",
     "tzlocal>=5.3.1",
+    "neongrid",
 ]
 
 [project.scripts]
@@ -27,11 +28,12 @@ include = ["autosh"]
 [tool.hatch.build.targets.wheel]
 include = ["autosh"]
 
-# [tool.uv.sources]
+[tool.uv.sources]
+neongrid = { workspace = true }
 # agentia = { path = "../agentia", editable = true }
 
 [tool.uv.workspace]
-members = ["autosh", "neongrid"]
+members = ["packages/neongrid"]
 
 [build-system]
 requires = ["hatchling"]

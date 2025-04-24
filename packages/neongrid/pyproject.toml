@@ -1,0 +1,22 @@
+[project]
+name = "neongrid"
+version = "0.0.1"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncio>=3.4.3",
+    "prompt-toolkit>=3.0.51",
+    "python-dotenv>=1.1.0",
+    "rich>=14.0.0",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["neongrid"]
+
+[tool.hatch.build.targets.wheel]
+include = ["neongrid"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
