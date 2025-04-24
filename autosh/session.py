@@ -1,8 +1,16 @@
 import asyncio
 from pathlib import Path
 import sys
-from agentia import Agent, UserMessage, Event, ToolCallEvent, MessageStream
+from agentia import (
+    Agent,
+    UserMessage,
+    Event,
+    ToolCallEvent,
+    MessageStream,
+    ChatCompletion,
+)
 from agentia.plugins import PluginInitError
+from neongrid.loading import Loading
 
 from autosh.config import CLI_OPTIONS, CONFIG
 import neongrid as ng
@@ -108,7 +116,7 @@ class Session:
         ):
             await self._print_help_and_exit(prompt)
         # Execute the prompt
-        # loading = self.__create_loading_indicator()
+        loading = self.__create_loading_indicator()
         CLI_OPTIONS.prompt = prompt
         self.agent.history.add(self._get_argv_message())
         if CLI_OPTIONS.stdin_has_data():
@@ -133,16 +141,7 @@ class Session:
                 )
             )
         completion = self.agent.chat_completion(prompt, stream=True, events=True)
-        async for stream in completion:
-            print(stream)
-            # if not loading:
-            #     loading = self.__create_loading_indicator()
-            if isinstance(stream, Event):
-                ...
-            else:
-                if await self.__render_streamed_markdown(stream):
-                    print()
-            # loading = None
+        await self.__process_completion(completion, loading)
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -165,6 +164,23 @@ class Session:
         if banner := (e.metadata or {}).get("banner"):
             banner(e.arguments)
 
+    async def __process_completion(
+        self, completion: ChatCompletion[Event | MessageStream], loading: Loading
+    ):
+        async for stream in completion:
+            await loading.finish()
+
+            if isinstance(stream, Event):
+                await self.__process_event(stream)
+            else:
+                print()
+                await self.__render_streamed_markdown(stream)
+                print()
+
+            loading = self.__create_loading_indicator()
+
+        await loading.finish()
+
     async def run_repl(self):
         while True:
             try:
@@ -179,19 +195,7 @@ class Session:
                 completion = self.agent.chat_completion(
                     prompt, stream=True, events=True
                 )
-                async for stream in completion:
-                    await loading.finish()
-
-                    if isinstance(stream, Event):
-                        await self.__process_event(stream)
-                    else:
-                        print()
-                        await self.__render_streamed_markdown(stream)
-                        print()
-
-                    loading = self.__create_loading_indicator()
-
-                await loading.finish()
+                await self.__process_completion(completion, loading)
             except KeyboardInterrupt:
                 break
 

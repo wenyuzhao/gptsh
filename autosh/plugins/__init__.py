@@ -9,7 +9,7 @@ from autosh.config import CLI_OPTIONS, CONFIG
 def __print_simple_banner(tag: str, text: str | None = None, dim: str | None = None):
     if CLI_OPTIONS.quiet:
         return
-    s = f"\n[bold magenta]{tag}[/bold magenta]"
+    s = f"\n[bold on magenta] {tag} [/bold on magenta]"
     if text:
         s += f" [italic magenta]{text}[/italic magenta]"
     if dim:
