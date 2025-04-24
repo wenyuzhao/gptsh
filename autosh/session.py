@@ -160,9 +160,10 @@ class Session:
     async def run_repl(self):
         while True:
             try:
-                print("\x1b[1;36m> \x1b[0m", end="", flush=True)
                 prompt = (
-                    await ng.input("", sync=False, persist="/tmp/autosh-history")
+                    await ng.input(
+                        "\x1b[1;36m> \x1b[0m", sync=False, persist="/tmp/autosh-history"
+                    )
                 ).strip()
                 if prompt in ["exit", "quit"]:
                     break

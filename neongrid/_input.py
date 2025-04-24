@@ -7,6 +7,10 @@ from prompt_toolkit.history import InMemoryHistory, History, FileHistory
 import inspect
 from typing import Awaitable, Literal, overload
 
+import rich
+
+from neongrid._print import printmd
+
 
 class MyFileHistory(FileHistory):
     def __init__(self, filename: Path) -> None:
@@ -98,6 +102,17 @@ def input(
 ) -> Awaitable[str]: ...
 
 
+def _print_prompt(prompt: str) -> None:
+    if prompt.startswith("rich:"):
+        prompt = prompt[5:]
+        rich.print(prompt, end="", flush=True)
+    elif prompt.startswith("md:") or prompt.startswith("markdown:"):
+        prompt = prompt.split(":", 1)[1]
+        printmd(prompt, end="", flush=True)
+    else:
+        print(prompt, end="", flush=True)
+
+
 def input(
     prompt: str = "",
     *,
@@ -119,7 +134,8 @@ def input(
         auto_suggest=AutoSuggestFromHistory(),
         enable_history_search=True,
     )
+    _print_prompt(prompt)
     if sync:
-        return session.prompt(prompt)
+        return session.prompt("")
     else:
-        return session.prompt_async(prompt)
+        return session.prompt_async("")
