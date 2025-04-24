@@ -153,6 +153,13 @@ class InlineTextPrinter:
             return None
         return s
 
+    def is_space_or_end(self, c: str | None) -> bool:
+        if c is None:
+            return True
+        if c[0] in ["\n", " ", *self.terminator]:
+            return True
+        return False
+
     async def parse_inline(self, consume_trailing_newline: bool = True):
         last_is_space = False
         start = True
@@ -191,17 +198,13 @@ class InlineTextPrinter:
                     scope.exit()
             elif (
                 t.is_bold_or_italic()
-                and (last_is_space or start)
+                and not self.is_space_or_end(self.peek())
                 and scope.last != t.token
             ):
                 # Start bold or italics
                 scope.enter(t)
                 self.emit(t.token)
-            elif (
-                t.is_bold_or_italic()
-                and self.peek() in [" ", "\t", *self.terminator]
-                and scope.last == t.token
-            ):
+            elif t.is_bold_or_italic() and not last_is_space and scope.last == t.token:
                 # End bold or italics
                 self.emit(t.token)
                 scope.exit()
