@@ -15,7 +15,7 @@ dependencies = [
     "typer>=0.12.5",
     "tzlocal>=5.3.1",
     "neongrid",
-    "agentia",
+    "agentia>=0.0.7",
 ]
 
 [project.scripts]
@@ -30,8 +30,6 @@ include = ["autosh"]
 
 [tool.uv.sources]
 neongrid = { workspace = true }
-agentia = { path = "../agentia", editable = true }
-# agentia = { path = "../agentia", editable = true }
 
 [tool.uv.workspace]
 members = ["packages/neongrid"]
