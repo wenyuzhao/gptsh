@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 import sys
 from agentia import (
@@ -7,7 +6,7 @@ from agentia import (
     Event,
     ToolCallEvent,
     MessageStream,
-    ChatCompletion,
+    Run,
     UserConsentEvent,
 )
 from agentia.plugins import PluginInitError
@@ -87,8 +86,8 @@ class Session:
             """,
         )
         agent.history.add(self.__get_argv_message())
-        completion = agent.chat_completion(prompt, stream=True)
-        async for stream in completion:
+        run = agent.run(prompt, stream=True)
+        async for stream in run:
             await self.__render_streamed_markdown(stream)
         sys.exit(0)
 
@@ -141,8 +140,8 @@ class Session:
                     role="user",
                 )
             )
-        completion = self.agent.chat_completion(prompt, stream=True, events=True)
-        await self.__process_completion(completion, loading, False)
+        run = self.agent.run(prompt, stream=True, events=True)
+        await self.__process_run(run, loading, False)
 
     async def exec_from_stdin(self):
         if sys.stdin.isatty():
@@ -174,22 +173,19 @@ class Session:
         )
         return result
 
-    async def __process_completion(
-        self,
-        completion: ChatCompletion[Event | MessageStream],
-        loading: Loading | None,
-        repl: bool,
+    async def __process_run(
+        self, run: Run[Event | MessageStream], loading: Loading | None, repl: bool
     ):
-        async for stream in completion:
+        async for e in run:
             if loading:
                 await loading.finish()
 
-            if isinstance(stream, Event):
-                await self.__process_event(stream)
+            if isinstance(e, Event):
+                await self.__process_event(e)
             else:
                 if repl or not CLI_OPTIONS.quiet:
                     print()
-                await self.__render_streamed_markdown(stream)
+                await self.__render_streamed_markdown(e)
 
             if loading:
                 loading = self.__create_loading_indicator()
@@ -212,10 +208,8 @@ class Session:
                 if len(prompt) == 0:
                     continue
                 loading = self.__create_loading_indicator()
-                completion = self.agent.chat_completion(
-                    prompt, stream=True, events=True
-                )
-                await self.__process_completion(completion, loading, True)
+                run = self.agent.run(prompt, stream=True, events=True)
+                await self.__process_run(run, loading, True)
             except KeyboardInterrupt:
                 break
 
