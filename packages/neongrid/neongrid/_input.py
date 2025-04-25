@@ -118,7 +118,9 @@ def input(
     id: str | None = None,
     persist: Path | str | Literal[False] = False,
 ) -> Awaitable[str] | str:
-    """Get a single character from standard input without echoing."""
+    """
+    Input function with fish-style history and auto-suggestions.
+    """
     if persist:
         history = load_persistent_history(persist)
     else:
@@ -132,8 +134,9 @@ def input(
         auto_suggest=AutoSuggestFromHistory(),
         enable_history_search=True,
     )
-    p = __get_prompt(prompt)
+    # p = __get_prompt(prompt)
+    print(prompt, end="", flush=True)
     if sync:
-        return session.prompt(p)
+        return session.prompt("")
     else:
-        return session.prompt_async(p)
+        return session.prompt_async("")

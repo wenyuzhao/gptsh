@@ -1,4 +1,6 @@
+from io import StringIO
 from pathlib import Path
+import socket
 import sys
 from agentia import (
     Agent,
@@ -18,6 +20,7 @@ from .plugins import create_plugins
 import rich
 import platform
 from rich.prompt import Confirm
+import os
 
 
 INSTRUCTIONS = f"""
@@ -193,16 +196,47 @@ class Session:
         if loading:
             await loading.finish()
 
+    def __get_input_prompt(self):
+        cwd = Path.cwd()
+        relative_to_home = False
+        if cwd.is_relative_to(Path.home()):
+            cwd = cwd.relative_to(Path.home())
+            relative_to_home = True
+        # short cwd
+        short_cwd = "/" if not relative_to_home else "~/"
+        parts = []
+        for i, p in enumerate(cwd.parts):
+            if i == 0 and p == "/":
+                continue
+            if i != len(cwd.parts) - 1:
+                parts.append(p[0])
+            else:
+                parts.append(p)
+        short_cwd += "/".join(parts)
+        cwd = str(cwd) if not relative_to_home else "~/" + str(cwd)
+        host = socket.gethostname()
+        user = os.getlogin()
+        prompt = CONFIG.repl_prompt.format(
+            cwd=cwd,
+            short_cwd=short_cwd,
+            host=host,
+            user=user,
+        )
+        return prompt
+
     async def run_repl(self):
+        if CONFIG.repl_banner:
+            rich.print(CONFIG.repl_banner)
         first = True
         while True:
             try:
                 if not first:
                     print()
                 first = False
-                prompt = (
-                    await ng.input("> ", sync=False, persist="/tmp/autosh-history")
-                ).strip()
+                input_prompt = self.__get_input_prompt()
+                rich.print(input_prompt, end="", flush=True)
+                prompt = await ng.input("", sync=False, persist="/tmp/autosh-history")
+                prompt = prompt.strip()
                 if prompt in ["exit", "quit"]:
                     break
                 if len(prompt) == 0:

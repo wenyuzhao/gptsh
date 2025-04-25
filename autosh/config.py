@@ -35,6 +35,14 @@ class Config(BaseModel):
         description="The LLM model to use for reasoning before executing commands",
     )
     api_key: str | None = Field(default=None, description="OpenRouter API key.")
+    repl_banner: str = Field(
+        default="🦄 Welcome to [cyan]autosh[/cyan]. The AI-powered, noob-friendly interactive shell.",
+        description="The banner for the REPL.",
+    )
+    repl_prompt: str = Field(
+        default="[bold on cyan]{short_cwd}[/bold on cyan][cyan]\ue0b0[/cyan] ",
+        description="The prompt for the REPL user input.",
+    )
 
     plugins: Plugins = Field(
         default_factory=Plugins,
