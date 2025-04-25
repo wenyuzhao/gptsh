@@ -1,5 +1,7 @@
 # `autosh` - The AI-powered, noob-friendly interactive shell
 
+![recording](recording.mov)
+
 # Getting Started
 
 ## Install
