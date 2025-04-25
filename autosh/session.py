@@ -1,4 +1,3 @@
-from io import StringIO
 from pathlib import Path
 import socket
 import sys
@@ -19,7 +18,6 @@ import neongrid as ng
 from .plugins import Banner, create_plugins
 import rich
 import platform
-from rich.prompt import Confirm
 import os
 
 
@@ -105,62 +103,6 @@ class Session:
             role="user",
         )
 
-    async def exec_prompt(self, prompt: str):
-        # Clean up the prompt
-        if prompt is not None:
-            prompt = prompt.strip()
-            if not prompt:
-                sys.exit(0)
-        # skip shebang line
-        if prompt.startswith("#!"):
-            prompt = prompt.split("\n", 1)[1]
-        if len(CLI_OPTIONS.args) == 1 and (
-            CLI_OPTIONS.args[0] == "-h" or CLI_OPTIONS.args[0] == "--help"
-        ):
-            await self._print_help_and_exit(prompt)
-        # Execute the prompt
-        loading = self.__create_loading_indicator() if sys.stdout.isatty() else None
-        CLI_OPTIONS.prompt = prompt
-        self.agent.history.add(self.__get_argv_message())
-        if CLI_OPTIONS.stdin_has_data():
-            self.agent.history.add(
-                UserMessage(
-                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Input data is fed to you through piped stdin. Please use tools to read when necessary.",
-                    role="user",
-                )
-            )
-        if not sys.stdout.isatty():
-            self.agent.history.add(
-                UserMessage(
-                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Your output should only contain the user expected output, nothing else. Don't ask user questions or print anything else since the user cannot see it.",
-                    role="user",
-                )
-            )
-        else:
-            self.agent.history.add(
-                UserMessage(
-                    content="IMPORTANT: This is a one-off run, so don't ask user questions since the user cannot reply.",
-                    role="user",
-                )
-            )
-        run = self.agent.run(prompt, stream=True, events=True)
-        await self.__process_run(run, loading, False)
-
-    async def exec_from_stdin(self):
-        if sys.stdin.isatty():
-            self._exit_with_error("No prompt is piped to stdin.")
-        prompt = sys.stdin.read()
-        if not prompt:
-            sys.exit(0)
-        CLI_OPTIONS.stdin_is_script = True
-        await self.exec_prompt(prompt)
-
-    async def exec_script(self, script: Path):
-        CLI_OPTIONS.script = script
-        with open(script, "r") as f:
-            prompt = f.read()
-        await self.exec_prompt(prompt)
-
     async def __process_event(self, e: Event, first: bool, repl: bool):
         prefix_newline = repl or not first
         if isinstance(e, UserConsentEvent):
@@ -201,6 +143,87 @@ class Session:
         if loading:
             await loading.finish()
 
+    async def exec_prompt(self, prompt: str):
+        # Clean up the prompt
+        if prompt is not None:
+            prompt = prompt.strip()
+            if not prompt:
+                sys.exit(0)
+        # skip shebang line
+        if prompt.startswith("#!"):
+            prompt = prompt.split("\n", 1)[1]
+        if len(CLI_OPTIONS.args) == 1 and (
+            CLI_OPTIONS.args[0] == "-h" or CLI_OPTIONS.args[0] == "--help"
+        ):
+            await self._print_help_and_exit(prompt)
+        # Execute the prompt
+        loading = self.__create_loading_indicator() if sys.stdout.isatty() else None
+        CLI_OPTIONS.prompt = prompt
+        self.agent.history.add(self.__get_argv_message())
+        if CLI_OPTIONS.stdin_has_data():
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Input data is fed to you through piped stdin. Please use tools to read when necessary.",
+                    role="user",
+                )
+            )
+        if not sys.stdout.isatty():
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: You are acting as an intermediate tool of a workflow. Your output should only contain the user expected output, nothing else. Don't ask user questions or print anything else since the user cannot see it.",
+                    role="user",
+                )
+            )
+        else:
+            self.agent.history.add(
+                UserMessage(
+                    content="IMPORTANT: This is a one-off run, so don't ask user questions since the user cannot reply.",
+                    role="user",
+                )
+            )
+        run = self.agent.run(prompt, stream=True, events=True)
+        await self.__process_run(run, loading, False)
+        if CLI_OPTIONS.start_repl_after_prompt:
+            await self.run_repl(handover=True)
+
+    async def exec_from_stdin(self):
+        if sys.stdin.isatty():
+            self._exit_with_error("No prompt is piped to stdin.")
+        prompt = sys.stdin.read()
+        if not prompt:
+            sys.exit(0)
+        CLI_OPTIONS.stdin_is_script = True
+        await self.exec_prompt(prompt)
+
+    async def exec_script(self, script: Path):
+        CLI_OPTIONS.script = script
+        with open(script, "r") as f:
+            prompt = f.read()
+        await self.exec_prompt(prompt)
+
+    async def run_repl(self, handover: bool = False):
+        if not handover and CONFIG.repl_banner:
+            rich.print(CONFIG.repl_banner)
+        first = not handover
+        while True:
+            try:
+                if not first:
+                    print()
+                first = False
+                input_prompt = self.__get_input_prompt()
+                rich.print(input_prompt, end="", flush=True)
+                prompt = await ng.input("", sync=False, persist="/tmp/autosh-history")
+                prompt = prompt.strip()
+                if prompt in ["exit", "quit"]:
+                    break
+                if len(prompt) == 0:
+                    continue
+                loading = self.__create_loading_indicator()
+                run = self.agent.run(prompt, stream=True, events=True)
+                await self.__process_run(run, loading, True)
+            except KeyboardInterrupt:
+                break
+
     def __get_input_prompt(self):
         cwd = Path.cwd()
         relative_to_home = False
@@ -228,29 +251,6 @@ class Session:
             user=user,
         )
         return prompt
-
-    async def run_repl(self):
-        if CONFIG.repl_banner:
-            rich.print(CONFIG.repl_banner)
-        first = True
-        while True:
-            try:
-                if not first:
-                    print()
-                first = False
-                input_prompt = self.__get_input_prompt()
-                rich.print(input_prompt, end="", flush=True)
-                prompt = await ng.input("", sync=False, persist="/tmp/autosh-history")
-                prompt = prompt.strip()
-                if prompt in ["exit", "quit"]:
-                    break
-                if len(prompt) == 0:
-                    continue
-                loading = self.__create_loading_indicator()
-                run = self.agent.run(prompt, stream=True, events=True)
-                await self.__process_run(run, loading, True)
-            except KeyboardInterrupt:
-                break
 
     def __create_loading_indicator(self):
         return ng.loading.kana()

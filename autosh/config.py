@@ -77,6 +77,7 @@ class CLIOptions(BaseModel):
     yes: bool = False
     quiet: bool = False
     think: bool = False
+    start_repl_after_prompt: bool = False
 
     prompt: str | None = None
     """The prompt to execute"""

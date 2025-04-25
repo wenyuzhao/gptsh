@@ -39,6 +39,14 @@ async def start_session(prompt: str | None, args: list[str]):
             file=sys.stderr,
         )
         sys.exit(1)
+    if CLI_OPTIONS.start_repl_after_prompt:
+        if piped_stdin or piped_stdout:
+            rich.print(
+                "[bold red]Error:[/bold red] [red]--repl is only available when not using piped stdin or stdout.[/red]",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
     if prompt:
         # No piped stdin, just run the prompt
         if Path(prompt).is_file():
@@ -73,6 +81,11 @@ def print_help():
             f"The LLM model to use. [dim]Default: {CONFIG.model} ({CONFIG.think_model} for reasoning).[/dim]",
         ],
         ["--think", "", "Use the reasoning models to think more before operating."],
+        [
+            "--repl",
+            "",
+            "Start a REPL session after executing the prompt or the script.",
+        ],
         ["--help", "-h", "Show this message and exit."],
     ]
 
@@ -117,6 +130,7 @@ def parse_args() -> tuple[str | None, list[str]]:
     p.add_argument("--quiet", "-q", action="store_true")
     p.add_argument("--think", action="store_true")
     p.add_argument("--model", "-m", type=str, default=None)
+    p.add_argument("--repl", action="store_true")
     p.add_argument("PROMPT_OR_FILE", nargs="?", default=None)
     p.add_argument("ARGS", nargs=argparse.REMAINDER)
 
@@ -133,6 +147,7 @@ def parse_args() -> tuple[str | None, list[str]]:
 
     CLI_OPTIONS.yes = args.yes
     CLI_OPTIONS.quiet = args.quiet
+    CLI_OPTIONS.start_repl_after_prompt = args.repl
 
     if args.model:
         if args.think:

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import sys
 from typing import Any, Callable
 import rich
-from rich.prompt import Confirm
 from rich.panel import Panel
 from rich.console import RenderableType
 from autosh.config import CLI_OPTIONS, CONFIG
@@ -60,56 +59,6 @@ class Banner:
         else:
             self.__print_simple_banner(args)
         return True
-
-
-# def __print_simple_banner(tag: str, text: str | None = None):
-#     if CLI_OPTIONS.quiet:
-#         return
-#     if not sys.stdout.isatty():
-#         s = f"\n[TOOL] {tag}"
-#         if text:
-#             s += f" {text}"
-#         print(s)
-#         return
-#     s = f"\n[bold on magenta] {tag} [/bold on magenta]"
-#     if text:
-#         s += f" [italic dim]{text}[/italic dim]"
-#     rich.print(s)
-
-
-# def simple_banner(
-#     tag: str | Callable[[Any], str],
-#     text: Callable[[Any], str] | None = None,
-#     text_key: str | None = None,
-# ):
-#     return lambda x: __print_simple_banner(
-#         tag if isinstance(tag, str) else tag(x),
-#         text(x) if text else (x.get(text_key) if text_key else None),
-#     )
-
-
-# def __print_code_preview_banner(
-#     title: str, content: RenderableType, short: str | None = None
-# ):
-#     if CLI_OPTIONS.quiet:
-#         if short and not CLI_OPTIONS.yes:
-#             rich.print(f"\n[magenta]{short}[/magenta]\n")
-#         return
-#     panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
-#     rich.print()
-#     rich.print(panel)
-
-
-# def code_preview_banner(
-#     title: str | Callable[[Any], str],
-#     short: str | Callable[[Any], str],
-#     content: Callable[[Any], RenderableType],
-# ):
-#     return lambda x: __print_code_preview_banner(
-#         title=title if isinstance(title, str) else title(x),
-#         content=content(x),
-#         short=short if isinstance(short, str) else short(x),
-#     )
 
 
 def code_result_panel(
