@@ -1,6 +1,6 @@
 [project]
 name = "autosh"
-version = "0.0.6"
+version = "0.0.7"
 description = "The AI-powered, noob-friendly interactive shell"
 authors = [{ name = "Wenyu Zhao", email = "wenyuzhaox@gmail.com" }]
 requires-python = ">=3.12"

@@ -158,7 +158,7 @@ wheels = [
 
 [[package]]
 name = "autosh"
-version = "0.0.6"
+version = "0.0.7"
 source = { editable = "." }
 dependencies = [
     { name = "agentia" },
@@ -1385,7 +1385,7 @@ wheels = [
 
 [[package]]
 name = "neongrid"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "packages/neongrid" }
 dependencies = [
     { name = "asyncio" },
