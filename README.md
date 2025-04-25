@@ -1,10 +1,8 @@
 # `autosh` - The AI-powered, noob-friendly interactive shell
 
-# Getting Started
+![recording](recording.gif) <!-- https://ezgif.com/video-to-gif -->
 
-<video controls autoplay>
-  <source src="recording.mov" type="video/mp4">
-</video>
+# Getting Started
 
 ## Install
 
