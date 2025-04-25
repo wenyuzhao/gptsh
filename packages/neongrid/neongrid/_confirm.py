@@ -3,8 +3,6 @@ import sys
 import termios
 import tty
 from neongrid.style import ESC, STYLE, StyleScope, Color
-from rich.live import Live
-import rich
 
 
 @contextmanager
@@ -21,7 +19,7 @@ def raw_mode():
 class Confirm:
     def __init__(self, default: bool = True):
         self.__start_pos = 0
-        self.__active = True
+        self.__active = default
         self.__yes_label = " ✔ YES "
         self.__no_label = " ✘ NO "
         self.scope = StyleScope()
@@ -114,9 +112,9 @@ class Confirm:
         return self.__active
 
 
-def confirm(prompt: str) -> bool:
+def confirm(prompt: str, default=True) -> bool:
     scope = StyleScope()
     with scope.style(bold=True, color=STYLE.confirm_color):
         prompt = prompt.strip() + " "
         print(prompt, end="", flush=True)
-    return Confirm().run()
+    return Confirm(default=default).run()
