@@ -1,6 +1,6 @@
 [project]
 name = "autosh"
-version = "0.0.7"
+version = "0.0.8"
 description = "The AI-powered, noob-friendly interactive shell"
 authors = [{ name = "Wenyu Zhao", email = "wenyuzhaox@gmail.com" }]
 requires-python = ">=3.12"
@@ -29,7 +29,7 @@ dependencies = [
     "tavily-python>=0.5.4",
     "typer>=0.12.5",
     "tzlocal>=5.3.1",
-    "neongrid>=0.0.1",
+    "neongrid>=0.0.2",
     "agentia>=0.0.8",
 ]
 
