@@ -162,24 +162,21 @@ class Session:
         await self.exec_prompt(prompt)
 
     async def __process_event(self, e: Event, first: bool, repl: bool):
+        prefix_newline = repl or not first
         if isinstance(e, UserConsentEvent):
             if CLI_OPTIONS.yes:
                 e.response = True
                 return False
-            e.response = await self.__confirm(e.message)
+            if prefix_newline:
+                print()
+            e.response = ng.confirm(e.message)
             return True
         if isinstance(e, ToolCallEvent) and e.result is None:
             if (banner := (e.metadata or {}).get("banner")) and isinstance(
                 banner, Banner
             ):
-                return banner.render(e.arguments, prefix_newline=repl or not first)
+                return banner.render(e.arguments, prefix_newline=prefix_newline)
         return False
-
-    async def __confirm(self, message: str) -> bool:
-        result = Confirm.ask(
-            f"\n[magenta]{message}[/magenta]", default=True, case_sensitive=False
-        )
-        return result
 
     async def __process_run(
         self, run: Run[Event | MessageStream], loading: Loading | None, repl: bool

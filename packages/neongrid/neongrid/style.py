@@ -37,6 +37,7 @@ class Style:
     highlight: Color = Color.MAGENTA
 
     input_color: Color | None = Color.CYAN
+    confirm_color: Color | None = Color.CYAN
 
 
 STYLE = Style()  # Default style
@@ -84,6 +85,7 @@ class StyleScopeState:
     is_strike: bool = False
     foreground_color: Color | None = None
     background_color: Color | None = None
+    cursor_visible: bool = True
 
     def clone(self):
         return StyleScopeState(
@@ -94,6 +96,7 @@ class StyleScopeState:
             is_strike=self.is_strike,
             foreground_color=self.foreground_color,
             background_color=self.background_color,
+            cursor_visible=self.cursor_visible,
         )
 
 
@@ -139,6 +142,7 @@ class StyleScope:
         strike: bool | None = None,
         color: Color | None = None,
         bg: Color | None = None,
+        cursor_visible: bool | None = None,
     ):
         assert len(self.__stack) > 0
         state = self.__stack[-1].clone()
@@ -157,6 +161,8 @@ class StyleScope:
             state.foreground_color = color
         if bg is not None:
             state.background_color = bg
+        if cursor_visible is not None:
+            state.cursor_visible = cursor_visible
         self.__apply_all(state)
         self.__stack.append(state)
 
@@ -175,6 +181,7 @@ class StyleScope:
         strike: bool | None = None,
         color: Color | None = None,
         bg: Color | None = None,
+        cursor_visible: bool | None = None,
     ):
         self.enter(
             bold=bold,
@@ -184,6 +191,7 @@ class StyleScope:
             strike=strike,
             color=color,
             bg=bg,
+            cursor_visible=cursor_visible,
         )
         yield
         self.exit()
@@ -211,3 +219,5 @@ class StyleScope:
             codes = ";".join(map(str, codes))
             if len(codes) > 0:
                 self.emit(f"{ESC}[{codes}m")
+            if not state.cursor_visible:
+                self.emit(f"{ESC}[?25l")
