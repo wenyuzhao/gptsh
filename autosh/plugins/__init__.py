@@ -6,26 +6,23 @@ from rich.console import RenderableType
 from autosh.config import CLI_OPTIONS, CONFIG
 
 
-def __print_simple_banner(tag: str, text: str | None = None, dim: str | None = None):
+def __print_simple_banner(tag: str, text: str | None = None):
     if CLI_OPTIONS.quiet:
         return
     s = f"\n[bold on magenta] {tag} [/bold on magenta]"
     if text:
-        s += f" [italic magenta]{text}[/italic magenta]"
-    if dim:
-        s += f" [italic dim]{dim}[/italic dim]"
+        s += f" [italic dim]{text}[/italic dim]"
     rich.print(s)
 
 
 def simple_banner(
     tag: str | Callable[[Any], str],
     text: Callable[[Any], str] | None = None,
-    dim: Callable[[Any], str] | None = None,
+    text_key: str | None = None,
 ):
     return lambda x: __print_simple_banner(
         tag if isinstance(tag, str) else tag(x),
-        text(x) if text else None,
-        dim(x) if dim else None,
+        text(x) if text else (x.get(text_key) if text_key else None),
     )
 
 

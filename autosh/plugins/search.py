@@ -17,11 +17,7 @@ class SearchPlugin(Plugin):
             raise ValueError("Please set the TAVILY_API_KEY environment variable.")
         self.__tavily = TavilyClient(api_key=key)
 
-    @tool(
-        metadata={
-            "banner": simple_banner("WEB SEARCH", dim=lambda a: a.get("query", "")),
-        }
-    )
+    @tool(metadata={"banner": simple_banner("WEB SEARCH", text_key="query")})
     async def web_search(
         self,
         query: Annotated[
@@ -43,11 +39,7 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool(
-        metadata={
-            "banner": simple_banner("NEWS SEARCH", dim=lambda a: a.get("query", "")),
-        }
-    )
+    @tool(metadata={"banner": simple_banner("NEWS SEARCH", text_key="query")})
     async def news_search(
         self,
         query: Annotated[
@@ -70,11 +62,7 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool(
-        metadata={
-            "banner": simple_banner("FINANCE SEARCH", dim=lambda a: a.get("query", ""))
-        }
-    )
+    @tool(metadata={"banner": simple_banner("FINANCE SEARCH", text_key="query")})
     async def finance_search(
         self,
         query: Annotated[

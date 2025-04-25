@@ -59,7 +59,7 @@ class CLIPlugin(Plugin):
         rich.print(text, file=sys.stderr if stderr else sys.stdout, end=end)
         return "DONE. You can continue and no need to repeat the text"
 
-    @tool(metadata={"banner": simple_banner("CWD", dim=lambda a: a.get("path", ""))})
+    @tool(metadata={"banner": simple_banner("CWD", text_key="path")})
     def chdir(self, path: Annotated[str, "The path to the new working directory"]):
         """
         Changes the current working directory of the terminal to another directory.
@@ -81,7 +81,7 @@ class CLIPlugin(Plugin):
             "args": CLI_OPTIONS.args,
         }
 
-    @tool(metadata={"banner": simple_banner("GET ENV", dim=lambda a: a.get("key", ""))})
+    @tool(metadata={"banner": simple_banner("GET ENV", text_key="key")})
     def get_env(self, key: Annotated[str, "The environment variable to get"]):
         """
         Get an environment variable.
@@ -104,8 +104,11 @@ class CLIPlugin(Plugin):
         metadata={
             "banner": simple_banner(
                 tag=lambda a: "SET ENV" if a.get("value") else "DEL ENV",
-                text=lambda a: a.get("key", ""),
-                dim=lambda a: a.get("value", "") or "",
+                text=lambda a: (
+                    f"{a.get("key", "")} = {a.get("value", "")}"
+                    if a.get("value")
+                    else a.get("key", "")
+                ),
             ),
         }
     )
@@ -127,7 +130,7 @@ class CLIPlugin(Plugin):
             os.environ[key] = value
         return f"DONE"
 
-    @tool(metadata={"banner": simple_banner("READ", dim=lambda a: a.get("path", ""))})
+    @tool(metadata={"banner": simple_banner("READ", text_key="path")})
     def read(
         self,
         path: Annotated[str, "The path to the file to read"],
@@ -147,8 +150,7 @@ class CLIPlugin(Plugin):
         metadata={
             "banner": simple_banner(
                 tag=lambda a: "WRITE" if not a.get("append") else "APPEND",
-                text=lambda a: a.get("path", ""),
-                dim=lambda a: f"({len(a.get('content', ''))} bytes)",
+                text=lambda a: f"{a.get("path", "")} ({len(a.get('content', ''))} bytes)",
             ),
         }
     )

@@ -47,7 +47,7 @@ class WebPlugin(Plugin):
         md = markdownify(res.text)
         return {"content": md}
 
-    @tool(metadata={"banner": simple_banner("BROWSE", dim=lambda a: a.get("url", ""))})
+    @tool(metadata={"banner": simple_banner("BROWSE", text_key="url")})
     def get_webpage_content(
         self,
         url: Annotated[str, "The URL of the web page to get the content of"],

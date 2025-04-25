@@ -6,11 +6,7 @@ from . import simple_banner
 class CalculatorPlugin(Plugin):
     NAME = "calc"
 
-    @tool(
-        metadata={
-            "banner": simple_banner("CALC", dim=lambda a: a.get("expression", ""))
-        }
-    )
+    @tool(metadata={"banner": simple_banner("CALC", text_key="expression")})
     def evaluate(
         self,
         expression: Annotated[
