@@ -267,9 +267,15 @@ class CLIPlugin(Plugin):
         return result
 
     @tool(metadata={"banner": simple_banner("EXIT")})
-    def exit(self, exitcode: Annotated[int, "The exit code of this shell session"] = 0):
+    def exit(
+        self,
+        exitcode: Annotated[int, "The exit code of this shell session"] = 0,
+        reason: Annotated[str | None, "The reason for exiting"] = None,
+    ):
         """
         Exit the current shell session with an optional exit code.
         """
+        if reason and exitcode != 0:
+            rich.print(f"\n[bold red]ABORT: {reason}[/bold red]")
         sys.exit(exitcode)
         return f"EXITED with code {exitcode}"
