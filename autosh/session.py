@@ -16,7 +16,7 @@ from neongrid.loading import Loading
 
 from autosh.config import CLI_OPTIONS, CONFIG
 import neongrid as ng
-from .plugins import create_plugins
+from .plugins import Banner, create_plugins
 import rich
 import platform
 from rich.prompt import Confirm
@@ -161,16 +161,21 @@ class Session:
             prompt = f.read()
         await self.exec_prompt(prompt)
 
-    async def __process_event(self, e: Event):
+    async def __process_event(self, e: Event, first: bool, repl: bool):
         if isinstance(e, UserConsentEvent):
+            if CLI_OPTIONS.yes:
+                e.response = True
+                return False
             e.response = await self.__confirm(e.message)
+            return True
         if isinstance(e, ToolCallEvent) and e.result is None:
-            if banner := (e.metadata or {}).get("banner"):
-                banner(e.arguments)
+            if (banner := (e.metadata or {}).get("banner")) and isinstance(
+                banner, Banner
+            ):
+                return banner.render(e.arguments, prefix_newline=repl or not first)
+        return False
 
     async def __confirm(self, message: str) -> bool:
-        if CLI_OPTIONS.yes:
-            return True
         result = Confirm.ask(
             f"\n[magenta]{message}[/magenta]", default=True, case_sensitive=False
         )
@@ -179,16 +184,19 @@ class Session:
     async def __process_run(
         self, run: Run[Event | MessageStream], loading: Loading | None, repl: bool
     ):
+        first = True
         async for e in run:
             if loading:
                 await loading.finish()
 
             if isinstance(e, Event):
-                await self.__process_event(e)
+                if await self.__process_event(e, first=first, repl=repl):
+                    first = False
             else:
-                if repl or not CLI_OPTIONS.quiet:
+                if repl or not first:
                     print()
                 await self.__render_streamed_markdown(e)
+                first = False
 
             if loading:
                 loading = self.__create_loading_indicator()

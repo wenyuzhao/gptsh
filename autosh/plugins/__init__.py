@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+import sys
 from typing import Any, Callable
 import rich
 from rich.prompt import Confirm
@@ -6,48 +8,108 @@ from rich.console import RenderableType
 from autosh.config import CLI_OPTIONS, CONFIG
 
 
-def __print_simple_banner(tag: str, text: str | None = None):
-    if CLI_OPTIONS.quiet:
-        return
-    s = f"\n[bold on magenta] {tag} [/bold on magenta]"
-    if text:
-        s += f" [italic dim]{text}[/italic dim]"
-    rich.print(s)
+@dataclass
+class Banner:
+    title: str | Callable[[Any], str]
+
+    text: str | Callable[[Any], str] | None = None
+
+    text_key: str | None = None
+
+    code: Callable[[Any], RenderableType] | None = None
+    """
+    Turn the banner into a code block
+    """
+
+    user_consent: bool = False
+
+    def __get_text(self, args: Any):
+        if self.text:
+            return self.text(args) if callable(self.text) else self.text
+        elif self.text_key:
+            return args.get(self.text_key)
+        return None
+
+    def __print_simple_banner(self, args: Any):
+        title = self.title(args) if callable(self.title) else self.title
+        if not sys.stdout.isatty():
+            s = f"[TOOL] {title}"
+            if text := self.__get_text(args):
+                s += f" {text}"
+            print(s)
+        else:
+            s = f"[bold on magenta] {title} [/bold on magenta]"
+            if text := self.__get_text(args):
+                s += f" [italic dim]{text}[/italic dim]"
+            rich.print(s)
+
+    def render(self, args: Any, prefix_newline: bool = True) -> bool:
+        if CLI_OPTIONS.quiet and not (self.user_consent and not CLI_OPTIONS.yes):
+            return False
+        if prefix_newline:
+            print()
+        if self.code:
+            code = self.code(args)
+            if CLI_OPTIONS.quiet and self.user_consent and not CLI_OPTIONS.yes:
+                self.__print_simple_banner(args)
+                return True
+            panel = Panel.fit(
+                code, title=f"[magenta]{self.title}[/magenta]", title_align="left"
+            )
+            rich.print(panel)
+        else:
+            self.__print_simple_banner(args)
+        return True
 
 
-def simple_banner(
-    tag: str | Callable[[Any], str],
-    text: Callable[[Any], str] | None = None,
-    text_key: str | None = None,
-):
-    return lambda x: __print_simple_banner(
-        tag if isinstance(tag, str) else tag(x),
-        text(x) if text else (x.get(text_key) if text_key else None),
-    )
+# def __print_simple_banner(tag: str, text: str | None = None):
+#     if CLI_OPTIONS.quiet:
+#         return
+#     if not sys.stdout.isatty():
+#         s = f"\n[TOOL] {tag}"
+#         if text:
+#             s += f" {text}"
+#         print(s)
+#         return
+#     s = f"\n[bold on magenta] {tag} [/bold on magenta]"
+#     if text:
+#         s += f" [italic dim]{text}[/italic dim]"
+#     rich.print(s)
 
 
-def __print_code_preview_banner(
-    title: str, content: RenderableType, short: str | None = None
-):
-    if CLI_OPTIONS.quiet:
-        if short and not CLI_OPTIONS.yes:
-            rich.print(f"\n[magenta]{short}[/magenta]\n")
-        return
-    panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
-    rich.print()
-    rich.print(panel)
+# def simple_banner(
+#     tag: str | Callable[[Any], str],
+#     text: Callable[[Any], str] | None = None,
+#     text_key: str | None = None,
+# ):
+#     return lambda x: __print_simple_banner(
+#         tag if isinstance(tag, str) else tag(x),
+#         text(x) if text else (x.get(text_key) if text_key else None),
+#     )
 
 
-def code_preview_banner(
-    title: str | Callable[[Any], str],
-    short: str | Callable[[Any], str],
-    content: Callable[[Any], RenderableType],
-):
-    return lambda x: __print_code_preview_banner(
-        title=title if isinstance(title, str) else title(x),
-        content=content(x),
-        short=short if isinstance(short, str) else short(x),
-    )
+# def __print_code_preview_banner(
+#     title: str, content: RenderableType, short: str | None = None
+# ):
+#     if CLI_OPTIONS.quiet:
+#         if short and not CLI_OPTIONS.yes:
+#             rich.print(f"\n[magenta]{short}[/magenta]\n")
+#         return
+#     panel = Panel.fit(content, title=f"[magenta]{title}[/magenta]", title_align="left")
+#     rich.print()
+#     rich.print(panel)
+
+
+# def code_preview_banner(
+#     title: str | Callable[[Any], str],
+#     short: str | Callable[[Any], str],
+#     content: Callable[[Any], RenderableType],
+# ):
+#     return lambda x: __print_code_preview_banner(
+#         title=title if isinstance(title, str) else title(x),
+#         content=content(x),
+#         short=short if isinstance(short, str) else short(x),
+#     )
 
 
 def code_result_panel(

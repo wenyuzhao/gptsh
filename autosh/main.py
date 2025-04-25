@@ -32,9 +32,11 @@ async def start_session(prompt: str | None, args: list[str]):
     os.environ["OPENROUTER_INCLUDE_REASONING"] = "false"
     await session.init()
     piped_stdin = not sys.stdin.isatty()
-    if piped_stdin and not CLI_OPTIONS.yes:
+    piped_stdout = not sys.stdout.isatty()
+    if (not CLI_OPTIONS.yes) and (piped_stdin or piped_stdout):
         rich.print(
-            "[bold red]Error:[/bold red] [red]--yes is required when using piped stdin.[/red]"
+            "[bold red]Error:[/bold red] [red]--yes (-y) is required when using piped stdin or stdout.[/red]",
+            file=sys.stderr,
         )
         sys.exit(1)
     if prompt:
@@ -121,7 +123,7 @@ def parse_args() -> tuple[str | None, list[str]]:
     try:
         args = p.parse_args()
     except argparse.ArgumentError as e:
-        rich.print(f"[bold red]Error:[/bold red] {str(e)}")
+        rich.print(f"[bold red]Error:[/bold red] {str(e)}", file=sys.stderr)
         print_help()
         sys.exit(1)
 

@@ -5,7 +5,7 @@ from rich.syntax import Syntax
 from rich.console import group
 from contextlib import redirect_stdout, redirect_stderr
 import io
-from . import code_preview_banner, code_result_panel
+from . import Banner, code_result_panel
 
 
 @group()
@@ -18,10 +18,10 @@ def code_with_explanation(code: str, explanation: str):
 class CodePlugin(Plugin):
     @tool(
         metadata={
-            "banner": code_preview_banner(
-                title="Run Python",
-                short="[bold]RUN[/bold] [italic]Python Code[/italic]",
-                content=lambda a: code_with_explanation(
+            "banner": Banner(
+                title="Run Python Code",
+                text_key="explanation",
+                code=lambda a: code_with_explanation(
                     a.get("python_code", ""), a.get("explanation", "")
                 ),
             )
@@ -31,7 +31,8 @@ class CodePlugin(Plugin):
         self,
         python_code: Annotated[str, "The python code to run."],
         explanation: Annotated[
-            str, "Explain what this code does, and what are you going to use it for."
+            str,
+            "Briefly explain what this code does, and what are you going to use it for.",
         ],
     ):
         """

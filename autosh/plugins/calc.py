@@ -1,12 +1,12 @@
 from agentia.plugins import tool, Plugin
 from typing import Annotated
-from . import simple_banner
+from . import Banner
 
 
 class CalculatorPlugin(Plugin):
     NAME = "calc"
 
-    @tool(metadata={"banner": simple_banner("CALC", text_key="expression")})
+    @tool(metadata={"banner": Banner("CALC", text_key="expression")})
     def evaluate(
         self,
         expression: Annotated[

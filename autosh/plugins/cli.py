@@ -8,7 +8,7 @@ from enum import StrEnum
 
 from autosh.config import CLI_OPTIONS
 
-from . import code_result_panel, code_preview_banner, simple_banner
+from . import code_result_panel, Banner
 
 
 class Color(StrEnum):
@@ -59,7 +59,7 @@ class CLIPlugin(Plugin):
         rich.print(text, file=sys.stderr if stderr else sys.stdout, end=end)
         return "DONE. You can continue and no need to repeat the text"
 
-    @tool(metadata={"banner": simple_banner("CWD", text_key="path")})
+    @tool(metadata={"banner": Banner("CWD", text_key="path")})
     def chdir(self, path: Annotated[str, "The path to the new working directory"]):
         """
         Changes the current working directory of the terminal to another directory.
@@ -69,7 +69,7 @@ class CLIPlugin(Plugin):
         os.chdir(path)
         return f"DONE"
 
-    @tool(metadata={"banner": simple_banner("GET ARGV")})
+    @tool(metadata={"banner": Banner("GET ARGV")})
     def get_argv(self):
         """
         Get the command line arguments.
@@ -81,7 +81,7 @@ class CLIPlugin(Plugin):
             "args": CLI_OPTIONS.args,
         }
 
-    @tool(metadata={"banner": simple_banner("GET ENV", text_key="key")})
+    @tool(metadata={"banner": Banner("GET ENV", text_key="key")})
     def get_env(self, key: Annotated[str, "The environment variable to get"]):
         """
         Get an environment variable.
@@ -90,7 +90,7 @@ class CLIPlugin(Plugin):
             raise KeyError(f"Environment variable `{key}` does not exist.")
         return os.environ[key]
 
-    @tool(metadata={"banner": simple_banner("GET ALL ENVS")})
+    @tool(metadata={"banner": Banner("GET ALL ENVS")})
     def get_all_envs(self):
         """
         Get all environment variables.
@@ -102,8 +102,8 @@ class CLIPlugin(Plugin):
 
     @tool(
         metadata={
-            "banner": simple_banner(
-                tag=lambda a: "SET ENV" if a.get("value") else "DEL ENV",
+            "banner": Banner(
+                title=lambda a: "SET ENV" if a.get("value") else "DEL ENV",
                 text=lambda a: (
                     f"{a.get("key", "")} = {a.get("value", "")}"
                     if a.get("value")
@@ -130,7 +130,7 @@ class CLIPlugin(Plugin):
             os.environ[key] = value
         return f"DONE"
 
-    @tool(metadata={"banner": simple_banner("READ", text_key="path")})
+    @tool(metadata={"banner": Banner("READ", text_key="path")})
     def read(
         self,
         path: Annotated[str, "The path to the file to read"],
@@ -148,8 +148,8 @@ class CLIPlugin(Plugin):
 
     @tool(
         metadata={
-            "banner": simple_banner(
-                tag=lambda a: "WRITE" if not a.get("append") else "APPEND",
+            "banner": Banner(
+                title=lambda a: "WRITE" if not a.get("append") else "APPEND",
                 text=lambda a: f"{a.get("path", "")} ({len(a.get('content', ''))} bytes)",
             ),
         }
@@ -212,10 +212,11 @@ class CLIPlugin(Plugin):
 
     @tool(
         metadata={
-            "banner": code_preview_banner(
+            "banner": Banner(
                 title="Run Command",
-                short=lambda a: f"[magenta][bold]➜[/bold] [italic]{a.get("command", "")}[/italic][/magenta]",
-                content=lambda a: f"[magenta][bold]➜[/bold] [italic]{a.get("command", "")}[/italic][/magenta]\n\n[dim]{a.get("explanation", "")}[/dim]",
+                text_key="command",
+                code=lambda a: f"[magenta][bold]➜[/bold] [italic]{a.get("command", "")}[/italic][/magenta]\n\n[dim]{a.get("explanation", "")}[/dim]",
+                user_consent=True,
             )
         }
     )
@@ -266,7 +267,7 @@ class CLIPlugin(Plugin):
         }
         return result
 
-    @tool(metadata={"banner": simple_banner("EXIT")})
+    @tool(metadata={"banner": Banner("EXIT")})
     def exit(
         self,
         exitcode: Annotated[int, "The exit code of this shell session"] = 0,

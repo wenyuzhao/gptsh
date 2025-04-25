@@ -3,7 +3,7 @@ from typing import Annotated, override
 import os
 from tavily import TavilyClient
 
-from autosh.plugins import simple_banner
+from autosh.plugins import Banner
 
 
 class SearchPlugin(Plugin):
@@ -17,7 +17,7 @@ class SearchPlugin(Plugin):
             raise ValueError("Please set the TAVILY_API_KEY environment variable.")
         self.__tavily = TavilyClient(api_key=key)
 
-    @tool(metadata={"banner": simple_banner("WEB SEARCH", text_key="query")})
+    @tool(metadata={"banner": Banner("WEB SEARCH", text_key="query")})
     async def web_search(
         self,
         query: Annotated[
@@ -39,7 +39,7 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool(metadata={"banner": simple_banner("NEWS SEARCH", text_key="query")})
+    @tool(metadata={"banner": Banner("NEWS SEARCH", text_key="query")})
     async def news_search(
         self,
         query: Annotated[
@@ -62,7 +62,7 @@ class SearchPlugin(Plugin):
         )
         return tavily_results
 
-    @tool(metadata={"banner": simple_banner("FINANCE SEARCH", text_key="query")})
+    @tool(metadata={"banner": Banner("FINANCE SEARCH", text_key="query")})
     async def finance_search(
         self,
         query: Annotated[

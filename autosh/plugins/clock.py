@@ -2,11 +2,11 @@ import datetime
 from agentia.plugins import tool, Plugin
 import tzlocal
 
-from autosh.plugins import simple_banner
+from autosh.plugins import Banner
 
 
 class ClockPlugin(Plugin):
-    @tool(metadata={"banner": simple_banner("GET TIME")})
+    @tool(metadata={"banner": Banner("GET TIME")})
     def get_current_time(self):
         """Get the current UTC time in ISO format"""
         utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
