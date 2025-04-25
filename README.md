@@ -1,8 +1,10 @@
 # `autosh` - The AI-powered, noob-friendly interactive shell
 
-![recording](recording.mov)
-
 # Getting Started
+
+<video controls autoplay>
+  <source src="recording.mov" type="video/mp4">
+</video>
 
 ## Install
 
