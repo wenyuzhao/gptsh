@@ -40,7 +40,7 @@ class Config(BaseModel):
         description="The banner for the REPL.",
     )
     repl_prompt: str = Field(
-        default="[bold on cyan]{short_cwd}[/bold on cyan][cyan]\ue0b0[/cyan] ",
+        default="{short_cwd}> ",
         description="The prompt for the REPL user input.",
     )
 

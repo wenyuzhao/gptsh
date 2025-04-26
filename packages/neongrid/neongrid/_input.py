@@ -1,7 +1,7 @@
-from io import StringIO
 from pathlib import Path
+import sys
 from types import FrameType
-from neongrid.style import STYLE
+from neongrid.style import ESC, STYLE
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.history import InMemoryHistory, History, FileHistory
@@ -86,7 +86,7 @@ def load_persistent_history(path: Path | str) -> History:
 
 @overload
 def input(
-    prompt: str = "",
+    prompt: str | None = None,
     *,
     sync: Literal[True] = True,
     id: str | None = None,
@@ -96,7 +96,7 @@ def input(
 
 @overload
 def input(
-    prompt: str = "",
+    prompt: str | None = None,
     *,
     sync: Literal[False],
     id: str | None = None,
@@ -112,7 +112,7 @@ def __get_prompt(prompt: str) -> Any:
 
 
 def input(
-    prompt: str = "",
+    prompt: str | None = None,
     *,
     sync: bool = True,
     id: str | None = None,
@@ -134,9 +134,11 @@ def input(
         auto_suggest=AutoSuggestFromHistory(),
         enable_history_search=True,
     )
-    # p = __get_prompt(prompt)
-    print(prompt, end="", flush=True)
+    if prompt is not None and STYLE.input_color:
+        prompt = [
+            ("fg:" + STYLE.input_color.name, prompt),
+        ]  # type: ignore
     if sync:
-        return session.prompt("")
+        return session.prompt(prompt)
     else:
-        return session.prompt_async("")
+        return session.prompt_async(prompt)

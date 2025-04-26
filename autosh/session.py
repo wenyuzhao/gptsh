@@ -211,8 +211,9 @@ class Session:
                     print()
                 first = False
                 input_prompt = self.__get_input_prompt()
-                rich.print(input_prompt, end="", flush=True)
-                prompt = await ng.input("", sync=False, persist="/tmp/autosh-history")
+                prompt = await ng.input(
+                    input_prompt, sync=False, persist="/tmp/autosh-history"
+                )
                 prompt = prompt.strip()
                 if prompt in ["exit", "quit"]:
                     break
